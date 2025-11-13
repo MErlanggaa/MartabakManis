@@ -33,5 +33,5 @@ RUN chown -R www-data:www-data /var/www/html \
 EXPOSE 9000
 
 # Start PHP-FPM
-CMD ["php-fpm"]
+CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=$PORT"]
 
