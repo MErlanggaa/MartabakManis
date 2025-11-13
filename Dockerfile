@@ -46,14 +46,18 @@ RUN APP_KEY=base64:dummykey12345678901234567890123456789012345678901234567890123
 # Build assets
 RUN npm run build
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache
 
-# Expose port (Railway will set PORT dynamically via environment variable)
+# Expose port (PORT can be set via environment variable, defaults to 8000)
 EXPOSE 8000
 
-# Start Laravel server
-CMD sh -c "php artisan storage:link || true && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"
+# Use entrypoint script
+ENTRYPOINT ["docker-entrypoint.sh"]
 

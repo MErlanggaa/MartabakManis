@@ -279,32 +279,67 @@ docker-compose exec app php artisan migrate:fresh --seed
 
 ## 📦 Production Deployment
 
-Untuk production, buat file `docker-compose.prod.yml`:
+Dockerfile sudah siap untuk production deployment dan bisa digunakan di platform apapun (Railway, Render, AWS, DigitalOcean, dll).
+
+### Menggunakan Dockerfile untuk Production
+
+Dockerfile sudah dikonfigurasi untuk:
+- ✅ Build assets otomatis (`npm run build`)
+- ✅ Install dependencies production (`--no-dev`)
+- ✅ Optimize autoloader
+- ✅ Entrypoint script untuk initialization otomatis
+- ✅ Dynamic port support (via `$PORT` environment variable)
+
+### Deploy ke Production Platform
+
+**Railway, Render, AWS, dll:**
+1. Push code ke repository (GitHub, GitLab, dll)
+2. Connect repository ke platform
+3. Platform akan otomatis detect `Dockerfile`
+4. Set environment variables di platform
+5. Platform akan build dan deploy otomatis
+
+**Required Environment Variables:**
+```env
+APP_NAME=UMKM App
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://your-domain.com
+APP_KEY=base64:... (akan di-generate otomatis jika kosong)
+
+DB_CONNECTION=mysql
+DB_HOST=your-db-host
+DB_PORT=3306
+DB_DATABASE=your-database
+DB_USERNAME=your-username
+DB_PASSWORD=your-password
+
+LOG_CHANNEL=stack
+LOG_LEVEL=error
+```
+
+**Port Configuration:**
+- Dockerfile menggunakan `$PORT` environment variable (default: 8000)
+- Platform akan set `PORT` otomatis
+- Entrypoint script akan start server dengan port yang sesuai
+
+### Local Production dengan Docker Compose
+
+Untuk production lokal, edit `docker-compose.yml`:
 
 ```yaml
-version: '3.8'
-
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: production
     environment:
       APP_ENV=production
       APP_DEBUG=false
       # ... environment variables lainnya
-  
-  nginx:
-    # Nginx configuration untuk production
-    volumes:
-      - ./docker/nginx/prod.conf:/etc/nginx/conf.d/default.conf
 ```
 
 Run production:
 
 ```bash
-docker-compose -f docker-compose.prod.yml up -d
+docker-compose up -d --build
 ```
 
 ## 🔐 Default Credentials (Setelah Seeder)

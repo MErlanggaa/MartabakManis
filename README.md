@@ -216,37 +216,32 @@ npm run dev
 
 Aplikasi akan berjalan di `http://localhost:8000`
 
-## 📱 Akses dari Mobile Device
+## 📱 Akses dari Mobile Device (Docker)
 
-### Persiapan
-1. Pastikan HP dan komputer terhubung ke WiFi yang sama
-2. Tutup firewall Windows (atau izinkan port 8000)
+Dengan Docker, aplikasi dapat diakses dari mobile device di jaringan yang sama.
 
 ### Cara Mengakses
 
-**Opsi 1: Script Otomatis (Recommended)**
-1. Build assets terlebih dahulu: `npm run build`
-2. Double-click file `start-mobile.bat`
-3. Akses dari HP: `http://<IP-COMPUTER>:8000`
+1. **Pastikan container running:**
+   ```bash
+   docker-compose up -d
+   ```
 
-**Opsi 2: Manual**
-```bash
-# Terminal 1 - Laravel Server
-php artisan serve --host=0.0.0.0 --port=8000
+2. **Cek IP address container/host:**
+   ```bash
+   docker inspect umkm_nginx | grep IPAddress
+   # atau gunakan IP komputer Anda
+   ```
 
-# Terminal 2 - Vite Dev Server (jika perlu hot reload)
-npm run dev
-```
-
-**Cek IP Address:**
-```bash
-ipconfig
-# Cari "IPv4 Address" di bagian WiFi adapter Anda
-```
+3. **Akses dari HP:**
+   ```
+   http://<IP-ADDRESS>:8000
+   ```
 
 ### Troubleshooting Mobile Access
 - Pastikan firewall tidak memblokir port 8000
 - Pastikan HP dan komputer di WiFi yang sama
+- Pastikan container exposed ke `0.0.0.0:8000` (sudah dikonfigurasi di docker-compose.yml)
 - Gunakan IP address dari WiFi adapter, bukan Ethernet
 - Untuk production, gunakan web server seperti Nginx/Apache
 
