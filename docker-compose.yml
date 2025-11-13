@@ -46,6 +46,12 @@ services:
       - DB_DATABASE=umkm
       - DB_USERNAME=umkm_user
       - DB_PASSWORD=umkm_password
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:8000
+      - LOG_CHANNEL=stack
+      - LOG_LEVEL=debug
+      - RUN_SEEDERS=true
 
   # Nginx Web Server
   nginx:

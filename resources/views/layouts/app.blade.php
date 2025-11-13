@@ -225,7 +225,7 @@
                     <img src="{{ asset('gambar/logo.jpeg') }}" 
                          alt="Logo UMKM" 
                          class="h-10 w-auto md:h-12 object-contain">
-                </a>
+                        </a>
                 
                 <!-- Desktop Menu -->
                 <div class="hidden md:flex items-center gap-4">
@@ -236,7 +236,7 @@
                             </a>
                             <a href="{{ route('admin.dashboard') }}" class="text-gray-700 hover:text-gray-900 transition-colors">
                                 <i class="fas fa-home"></i> Beranda
-                            </a>
+                                </a>
                         @elseif(auth()->user()->role === 'umkm')
                             <a href="{{ route('public.katalog') }}" class="text-gray-700 hover:text-gray-900 transition-colors">
                                 <i class="fas fa-th-large"></i> Katalog
@@ -247,7 +247,7 @@
                         @else
                             <a href="{{ route('public.katalog') }}" class="text-gray-700 hover:text-gray-900 transition-colors">
                                 <i class="fas fa-home"></i> Beranda
-                            </a>
+                                </a>
                         @endif
                         
                         <div class="relative group">
@@ -268,7 +268,7 @@
                                 <form action="{{ route('logout') }}" method="POST">
                                     @csrf
                                     <button type="submit" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
-                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    <i class="fas fa-sign-out-alt"></i> Logout
                                     </button>
                                 </form>
                             </div>
@@ -352,14 +352,14 @@
         @if(session('success'))
             <div class="container mx-auto px-4 py-4">
                 <div class="bg-[#e6f5f4] border-l-4 border-[#009b97] text-gray-800 px-4 py-3 rounded mb-4" role="alert">
-                    <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <i class="fas fa-check-circle text-[#009b97]"></i>
-                            <span>{{ session('success') }}</span>
+                    <span>{{ session('success') }}</span>
                         </div>
                         <button onclick="this.parentElement.parentElement.remove()" class="text-gray-600 hover:text-gray-800 transition-colors">
-                            <i class="fas fa-times"></i>
-                        </button>
+                        <i class="fas fa-times"></i>
+                    </button>
                     </div>
                 </div>
             </div>
@@ -367,12 +367,12 @@
 
         @if(session('error'))
             <div class="container mx-auto px-4 py-4">
-                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded mb-4" role="alert">
-                    <div class="flex items-center justify-between">
-                        <span>{{ session('error') }}</span>
-                        <button onclick="this.parentElement.parentElement.remove()" class="text-red-700 hover:text-red-900">
-                            <i class="fas fa-times"></i>
-                        </button>
+            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+                <div class="flex items-center justify-between">
+                    <span>{{ session('error') }}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-red-700 hover:text-red-900">
+                        <i class="fas fa-times"></i>
+                    </button>
                     </div>
                 </div>
             </div>
@@ -429,7 +429,7 @@
 
         <!-- Footer Bagian Hijau -->
         <div class="bg-[#218689] text-white py-6">
-            <div class="container mx-auto px-4">
+        <div class="container mx-auto px-4">
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                     <!-- Social Media Icons -->
                     <div class="flex items-center gap-4">
@@ -438,24 +438,24 @@
                         </a>
                         <a href="#" class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="WhatsApp">
                             <i class="fab fa-whatsapp text-2xl"></i>
-                        </a>
+                </a>
                         <a href="#" class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Facebook">
-                            <i class="fab fa-facebook text-2xl"></i>
-                        </a>
+                    <i class="fab fa-facebook text-2xl"></i>
+                </a>
                         <a href="#" class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="LinkedIn">
-                            <i class="fab fa-linkedin text-2xl"></i>
-                        </a>
+                    <i class="fab fa-linkedin text-2xl"></i>
+                </a>
                         <a href="#" class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Instagram">
                             <i class="fab fa-instagram text-2xl"></i>
-                        </a>
+                </a>
                         <a href="#" class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Twitter">
-                            <i class="fab fa-twitter text-2xl"></i>
-                        </a>
-                    </div>
+                    <i class="fab fa-twitter text-2xl"></i>
+                </a>
+            </div>
                     <!-- Copyright -->
                     <p class="text-white text-sm text-center md:text-right">
                         © 2025 Martabak Manis    | All Rights Reserved.
-                    </p>
+            </p>
                 </div>
             </div>
         </div>
