@@ -415,9 +415,8 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 📞 Kontak
 
-- Email: your-email@example.com
-- Project Link: [https://github.com/your-username/umkm-app](https://github.com/your-username/umkm-app)
-
+- Email: muhammaderlanggaputraw@gmail.com
+- Project Link: https://github.com/MErlanggaa/MartabakManis/tree/main
 ---
 
 **Dibuat dengan ❤️ untuk UMKM Indonesia**
