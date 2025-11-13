@@ -100,6 +100,42 @@ Website katalog UMKM dengan fitur-fitur canggih untuk membantu UMKM berkembang d
 
 ## 📦 Instalasi
 
+### Opsi 1: Menggunakan Docker (Recommended) 🐳
+
+**Mudah dan cepat, tidak perlu install MySQL atau PHP secara manual!**
+
+Lihat dokumentasi lengkap di [DOCKER.md](DOCKER.md)
+
+**Quick Start:**
+```bash
+# Clone repository
+git clone <repository-url>
+cd umkm-app
+
+# Setup environment
+cp .env.example .env
+
+# Build dan start containers
+docker-compose up -d --build
+
+# Setup aplikasi
+docker-compose exec app composer install
+docker-compose exec app php artisan key:generate
+docker-compose exec app php artisan migrate
+docker-compose exec app php artisan db:seed
+
+# Build assets (Production)
+docker-compose exec node npm install
+docker-compose exec node npm run build
+
+# Atau run dev server (Development)
+docker-compose exec node npm run dev
+```
+
+Akses aplikasi di: **http://localhost:8000**
+
+### Opsi 2: Instalasi Manual
+
 ### 1. Clone Repository
 ```bash
 git clone <repository-url>
