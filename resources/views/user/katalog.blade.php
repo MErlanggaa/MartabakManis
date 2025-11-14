@@ -6,56 +6,89 @@
 <style>
     /* Pagination Styling dengan warna harmonis */
     .pagination {
-        display: flex;
-        gap: 0.5rem;
+        display: flex !important;
+        gap: 1rem !important;
         align-items: center;
         justify-content: center;
         flex-wrap: wrap;
-    }
-    
-    .pagination .page-item {
+        list-style: none;
+        padding: 0;
         margin: 0;
     }
     
+    @media (min-width: 768px) {
+        .pagination {
+            gap: 1.5rem !important;
+        }
+    }
+    
+    @media (min-width: 1024px) {
+        .pagination {
+            gap: 2rem !important;
+        }
+    }
+    
+    .pagination .page-item {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
     .pagination .page-link {
-        color: #009b97;
-        border-color: #e6f5f4;
-        background-color: white;
+        color: #009b97 !important;
+        border-color: #e6f5f4 !important;
+        background-color: white !important;
         transition: all 0.3s ease;
-        padding: 0.5rem 0.75rem;
-        margin: 0 0.25rem;
+        padding: 0.5rem 0.75rem !important;
+        margin: 0 !important;
         min-width: 2.5rem;
         text-align: center;
         display: inline-block;
+        border-radius: 0.5rem;
+        border-width: 1px;
     }
     
     @media (min-width: 768px) {
         .pagination .page-link {
-            padding: 0.625rem 1rem;
-            margin: 0 0.375rem;
+            padding: 0.625rem 1rem !important;
             min-width: 3rem;
+            margin: 0 !important;
         }
     }
     
     .pagination .page-link:hover {
-        color: #007a77;
-        background-color: #e6f5f4;
-        border-color: #009b97;
+        color: #007a77 !important;
+        background-color: #e6f5f4 !important;
+        border-color: #009b97 !important;
         transform: translateY(-2px);
     }
     
     .pagination .page-item.active .page-link {
-        background-color: #009b97;
-        border-color: #009b97;
-        color: white;
+        background-color: #009b97 !important;
+        border-color: #009b97 !important;
+        color: white !important;
     }
     
     .pagination .page-item.disabled .page-link {
-        color: #9ca3af;
-        background-color: #f9fafb;
-        border-color: #e5e7eb;
+        color: #9ca3af !important;
+        background-color: #f9fafb !important;
+        border-color: #e5e7eb !important;
         cursor: not-allowed;
         opacity: 0.6;
+    }
+    
+    /* Override Bootstrap default spacing - remove all margins */
+    .pagination > li + li {
+        margin-left: 0 !important;
+    }
+    
+    .pagination li {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Ensure gap works properly */
+    .pagination .page-item:not(:last-child) {
+        margin-right: 0 !important;
     }
 </style>
 @endsection
