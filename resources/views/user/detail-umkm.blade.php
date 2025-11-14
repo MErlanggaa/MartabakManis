@@ -103,7 +103,7 @@
                                     @endif
                                 </div>
                                 <div class="p-4">
-                                    <h3 class="font-semibold text-gray-900">{{ $layanan->nama }}</h3>
+                                    <h3 class="font-semibold text-gray-900 line-clamp-2">{{ Str::words($layanan->nama, 14, '...') }}</h3>
                                     @if($layanan->description)
                                         <p class="text-sm text-gray-600 mt-1 line-clamp-3">{{ $layanan->description }}</p>
                                     @endif

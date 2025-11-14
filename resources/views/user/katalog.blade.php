@@ -350,7 +350,7 @@
                 <div class="p-3 md:p-4 lg:p-5">
                     <!-- Product Name -->
                     <h3 class="text-sm md:text-base lg:text-lg font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-[#009b97] transition-colors leading-tight">
-                        {{ $item->nama }}
+                        {{ Str::words($item->nama, 14, '...') }}
                     </h3>
                     
                     <!-- Description - Hidden on mobile, shown on md+ -->
@@ -444,7 +444,7 @@
 
     <!-- Pagination -->
     @if($layanan->hasPages())
-        <div class="mt-12 flex justify-center">
+        <div class="mt-16 mb-8 flex justify-center">
             <div class="bg-white rounded-xl shadow-md p-4 border border-gray-100">
                 {{ $layanan->appends(request()->query())->links() }}
             </div>
