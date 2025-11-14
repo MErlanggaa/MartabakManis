@@ -506,8 +506,103 @@
     @if($layanan->hasPages())
         <div class="mt-16 md:mt-20 lg:mt-24 mb-8 md:mb-12 lg:mb-16 flex justify-center">
             <div class="bg-white rounded-xl shadow-md p-4 md:p-6 lg:p-8 border border-gray-100 w-full max-w-4xl">
-                <div class="flex justify-center">
+                <!-- Mobile: Showing results di samping pagination (default Laravel) -->
+                <div class="md:hidden">
                     {{ $layanan->appends(request()->query())->links() }}
+                </div>
+                
+                <!-- Desktop: Showing results di atas, pagination di bawah -->
+                <div class="hidden md:block">
+                    <!-- Showing Results Text -->
+                    <div class="text-center mb-4 lg:mb-6">
+                        <p class="text-gray-600 text-sm lg:text-base">
+                            Showing <span class="font-bold text-[#009b97]">{{ $layanan->firstItem() }}</span> 
+                            to <span class="font-bold text-[#009b97]">{{ $layanan->lastItem() }}</span> 
+                            of <span class="font-bold text-gray-900">{{ $layanan->total() }}</span> results
+                        </p>
+                    </div>
+                    
+                    <!-- Pagination Links Only (without showing text) -->
+                    <div class="flex justify-center">
+                        @php
+                            $pagination = $layanan->appends(request()->query());
+                            $currentPage = $pagination->currentPage();
+                            $lastPage = $pagination->lastPage();
+                            
+                            // Calculate page range (show 5 pages around current)
+                            $start = max(1, $currentPage - 2);
+                            $end = min($lastPage, $currentPage + 2);
+                            
+                            // Adjust if near start or end
+                            if ($end - $start < 4) {
+                                if ($start == 1) {
+                                    $end = min($lastPage, $start + 4);
+                                } else {
+                                    $start = max(1, $end - 4);
+                                }
+                            }
+                        @endphp
+                        <ul class="pagination">
+                            {{-- Previous Page Link --}}
+                            @if ($pagination->onFirstPage())
+                                <li class="page-item disabled">
+                                    <span class="page-link">&laquo;</span>
+                                </li>
+                            @else
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $pagination->previousPageUrl() }}" rel="prev">&laquo;</a>
+                                </li>
+                            @endif
+
+                            {{-- First Page --}}
+                            @if ($start > 1)
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $pagination->url(1) }}">1</a>
+                                </li>
+                                @if ($start > 2)
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                @endif
+                            @endif
+
+                            {{-- Pagination Elements --}}
+                            @for ($page = $start; $page <= $end; $page++)
+                                @if ($page == $currentPage)
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ $page }}</span>
+                                    </li>
+                                @else
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ $pagination->url($page) }}">{{ $page }}</a>
+                                    </li>
+                                @endif
+                            @endfor
+
+                            {{-- Last Page --}}
+                            @if ($end < $lastPage)
+                                @if ($end < $lastPage - 1)
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                @endif
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $pagination->url($lastPage) }}">{{ $lastPage }}</a>
+                                </li>
+                            @endif
+
+                            {{-- Next Page Link --}}
+                            @if ($pagination->hasMorePages())
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $pagination->nextPageUrl() }}" rel="next">&raquo;</a>
+                                </li>
+                            @else
+                                <li class="page-item disabled">
+                                    <span class="page-link">&raquo;</span>
+                                </li>
+                            @endif
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
