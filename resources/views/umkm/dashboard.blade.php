@@ -705,25 +705,59 @@
             cancelButtonText: 'Batal'
         }).then((result) => {
             if (result.isConfirmed) {
-            fetch(`/umkm/layanan/${layananId}/remove`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(data.message || 'Layanan berhasil dihapus!', 'success');
-                    document.getElementById(`layanan-${layananId}`).remove();
-                } else {
-                    showToast('Gagal menghapus layanan: ' + (data.message || 'Unknown error'), 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Terjadi kesalahan saat menghapus layanan', 'error');
-            });
+                // Show loading
+                Swal.fire({
+                    title: 'Menghapus...',
+                    text: 'Sedang menghapus layanan',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                fetch(`/umkm/layanan/${layananId}/remove`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove element from DOM
+                        const layananElement = document.getElementById(`layanan-${layananId}`);
+                        if (layananElement) {
+                            layananElement.remove();
+                        }
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil Dihapus!',
+                            text: data.message || 'Layanan berhasil dihapus!',
+                            confirmButtonColor: '#009b97',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal',
+                            text: 'Gagal menghapus layanan: ' + (data.message || 'Unknown error'),
+                            confirmButtonColor: '#009b97'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Terjadi kesalahan saat menghapus layanan',
+                        confirmButtonColor: '#009b97'
+                    });
+                });
             }
         });
     }
