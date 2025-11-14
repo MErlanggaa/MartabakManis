@@ -410,7 +410,7 @@
                    <div class="p-3 md:p-4 lg:p-5">
                     <!-- Product Name -->
                     <h3 class="text-sm md:text-base lg:text-lg font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-[#009b97] transition-colors leading-tight">
-                            {{ Str::limit($item->nama, 12) }}
+                            {{ Str::limit($item->nama,  20, '...') }}
                     </h3>
                     
                     <!-- Description - Hidden on mobile, shown on md+ -->
