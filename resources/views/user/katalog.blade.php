@@ -7,7 +7,7 @@
     /* Pagination Styling dengan warna harmonis */
     .pagination {
         display: flex !important;
-        gap: 1rem !important;
+        gap: 0.5rem !important;
         align-items: center;
         justify-content: center;
         flex-wrap: wrap;
@@ -366,10 +366,10 @@
                 $userFavorites = auth()->check() ? (auth()->user()->favorites ?? []) : [];
                 $isFavorite = $umkm && auth()->check() && in_array($umkm->id, $userFavorites);
             @endphp
-            <div class="bg-white rounded-lg md:rounded-2xl shadow-md md:shadow-lg hover:shadow-xl md:hover:shadow-2xl transition-all duration-300 border border-gray-100 group cursor-pointer overflow-hidden transform hover:-translate-y-1" 
+            <div class="bg-white rounded-lg md:rounded-2xl shadow-sm md:shadow-lg hover:shadow-md md:hover:shadow-2xl transition-all duration-300 border border-gray-100 group cursor-pointer overflow-hidden transform hover:-translate-y-1" 
                  onclick="window.location.href='{{ route('public.layanan.show', $item->id) }}'">
                 <!-- Product Image -->
-                <div class="relative w-full h-40 md:h-48 lg:h-56 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+                <div class="relative w-full h-32 md:h-48 lg:h-56 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
                     @if($item->photo_path)
                         <img src="{{ asset('storage/' . $item->photo_path) }}" 
                              class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
@@ -407,7 +407,7 @@
                 </div>
                 
                 <!-- Content -->
-                <div class="p-3 md:p-4 lg:p-5">
+                <div class="p-2.5 md:p-4 lg:p-5">
                     <!-- Product Name -->
                     <h3 class="text-sm md:text-base lg:text-lg font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-[#009b97] transition-colors leading-tight">
                         {{ Str::words($item->nama, 7, '...') }}
@@ -421,9 +421,9 @@
                     @endif
                     
                     <!-- Price -->
-                    <div class="mb-2 md:mb-4 pb-2 md:pb-4 border-b border-gray-100">
+                    <div class="mb-1.5 md:mb-4 pb-1.5 md:pb-4 border-b border-gray-100">
                         <div class="flex items-baseline gap-2">
-                            <span class="text-base md:text-xl lg:text-2xl font-bold text-black">
+                            <span class="text-sm md:text-xl lg:text-2xl font-bold text-black">
                             Rp {{ number_format($item->price, 0, ',', '.') }}
                         </span>
                         </div>
@@ -431,20 +431,20 @@
                     
                     <!-- UMKM Name & Location - Simplified on mobile -->
                     @if($umkm)
-                        <div class="mb-2 md:mb-4 space-y-1 md:space-y-2">
+                        <div class="mb-1.5 md:mb-4 space-y-0.5 md:space-y-2">
                             <!-- UMKM Name -->
-                            <div class="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm">
-                                <div class="w-5 h-5 md:w-6 md:h-6 rounded-full bg-[#218689]  flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-store text-white text-[10px] md:text-xs"></i>
+                            <div class="flex items-center gap-1 md:gap-2 text-[10px] md:text-sm">
+                                <div class="w-4 h-4 md:w-6 md:h-6 rounded-full bg-[#218689] flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-store text-white text-[8px] md:text-xs"></i>
                                 </div>
-                                <span class="font-semibold text-gray-800 truncate text-xs md:text-sm">{{ $umkm->nama }}</span>
+                                <span class="font-semibold text-gray-800 truncate text-[10px] md:text-sm">{{ Str::limit($umkm->nama, 15) }}</span>
                         </div>
                         
-                            <!-- Location dengan Jarak - Simplified on mobile -->
-                            <div class="space-y-1 md:space-y-2">
+                            <!-- Location dengan Jarak - Hidden on mobile untuk menghemat ruang -->
+                            <div class="hidden md:space-y-2">
                                 <!-- Alamat - Hidden on mobile, shown on md+ -->
                                 @if($umkm->latitude && $umkm->longitude)
-                                    <div class="address-container  md:flex items-start gap-2 text-xs" 
+                                    <div class="address-container md:flex items-start gap-2 text-xs" 
                                          data-lat="{{ $umkm->latitude }}" 
                                          data-lng="{{ $umkm->longitude }}"
                                          data-umkm-id="{{ $umkm->id }}">
@@ -454,7 +454,7 @@
                                     </span>
                                     </div>
                             @else
-                                    <div class=" md:flex items-start gap-2 text-xs text-gray-400">
+                                    <div class="md:flex items-start gap-2 text-xs text-gray-400">
                                         <i class="fas fa-map-marker-alt mt-0.5 flex-shrink-0"></i>
                                         <span>Lokasi tidak tersedia</span>
                                     </div>
@@ -476,9 +476,9 @@
                     
                     <!-- Action Button -->
                     <button onclick="event.stopPropagation(); window.location.href='{{ route('public.layanan.show', $item->id) }}'" 
-                            class="w-full group/btn bg-[#32a752] hover:bg-[#027a00] text-white text-center py-2 md:py-2.5 lg:py-3 rounded-lg md:rounded-xl text-xs md:text-sm lg:text-base font-semibold transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2">
-                        <span>Detail Layanan    </span>
-                        <i class="fas fa-arrow-right text-xs md:text-sm group-hover/btn:translate-x-1 transition-transform"></i>
+                            class="w-full group/btn bg-[#32a752] hover:bg-[#027a00] text-white text-center py-1.5 md:py-2.5 lg:py-3 rounded-lg md:rounded-xl text-[10px] md:text-sm lg:text-base font-semibold transition-all duration-300 shadow-sm md:shadow-md hover:shadow-md md:hover:shadow-lg transform hover:scale-105 flex items-center justify-center gap-1 md:gap-2">
+                        <span>Detail Layanan</span>
+                        <i class="fas fa-arrow-right text-[8px] md:text-sm group-hover/btn:translate-x-1 transition-transform"></i>
                     </button>
                 </div>
             </div>
