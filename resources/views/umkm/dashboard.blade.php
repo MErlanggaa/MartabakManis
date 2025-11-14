@@ -1126,6 +1126,24 @@
                 
                 const layananId = document.getElementById('layanan_id').value;
                 const formData = new FormData(this);
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const submitIcon = document.getElementById('layananSubmitIcon');
+                const submitText = document.getElementById('layananSubmitText');
+                const originalIconClass = submitIcon ? submitIcon.className : '';
+                const originalText = submitText ? submitText.textContent : '';
+                
+                // Show loading on button
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    if (submitIcon) {
+                        submitIcon.className = 'fas fa-spinner fa-spin mr-2';
+                    }
+                    if (submitText) {
+                        submitText.textContent = 'Mengupload...';
+                    } else {
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Mengupload...';
+                    }
+                }
                 
                 // Jika ada ID, berarti edit mode
                 if (layananId) {
@@ -1153,18 +1171,60 @@
                     })
                     .then(response => response.json())
                     .then(data => {
+                        // Restore button
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            if (submitIcon) {
+                                submitIcon.className = originalIconClass;
+                            }
+                            if (submitText) {
+                                submitText.textContent = originalText;
+                            } else {
+                                submitBtn.innerHTML = '<i class="fas fa-plus mr-2"></i> Tambah Layanan';
+                            }
+                        }
+                        
                         if (data.success) {
-                            showToast(data.message, 'success');
-                            setTimeout(() => {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: data.message || 'Layanan berhasil diperbarui!',
+                                confirmButtonColor: '#009b97',
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
                                 location.reload();
-                            }, 1000);
+                            });
                         } else {
-                            showToast('Gagal memperbarui layanan: ' + (data.message || 'Unknown error'), 'error');
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: 'Gagal memperbarui layanan: ' + (data.message || 'Unknown error'),
+                                confirmButtonColor: '#009b97'
+                            });
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        showToast('Terjadi kesalahan saat memperbarui layanan', 'error');
+                        // Restore button
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            if (submitIcon) {
+                                submitIcon.className = originalIconClass;
+                            }
+                            if (submitText) {
+                                submitText.textContent = originalText;
+                            } else {
+                                submitBtn.innerHTML = '<i class="fas fa-plus mr-2"></i> Tambah Layanan';
+                            }
+                        }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Terjadi kesalahan saat memperbarui layanan',
+                            confirmButtonColor: '#009b97'
+                        });
                     });
                 } else {
                     // Create new (kode yang sudah ada)
@@ -1177,18 +1237,67 @@
                     })
                     .then(response => response.json())
                     .then(data => {
+                        // Restore button
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            if (submitIcon) {
+                                submitIcon.className = originalIconClass;
+                            }
+                            if (submitText) {
+                                submitText.textContent = originalText;
+                            } else {
+                                submitBtn.innerHTML = '<i class="fas fa-plus mr-2"></i> Tambah Layanan';
+                            }
+                        }
+                        
                         if (data.success) {
-                            showToast(data.message, 'success');
-                            setTimeout(() => {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Upload Berhasil!',
+                                text: data.message || 'Layanan berhasil ditambahkan!',
+                                confirmButtonColor: '#009b97',
+                                timer: 2500,
+                                showConfirmButton: true,
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                // Reset form
+                                layananForm.reset();
+                                document.getElementById('layanan_id').value = '';
+                                document.getElementById('layananFormTitle').textContent = 'Tambah Layanan Baru';
+                                
+                                // Reload to show new layanan
                                 location.reload();
-                            }, 1000);
+                            });
                         } else {
-                            showToast('Gagal menambahkan layanan: ' + (data.message || 'Unknown error'), 'error');
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: 'Gagal menambahkan layanan: ' + (data.message || 'Unknown error'),
+                                confirmButtonColor: '#009b97'
+                            });
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        showToast('Terjadi kesalahan saat menambahkan layanan', 'error');
+                        // Restore button
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            if (submitIcon) {
+                                submitIcon.className = originalIconClass;
+                            }
+                            if (submitText) {
+                                submitText.textContent = originalText;
+                            } else {
+                                submitBtn.innerHTML = '<i class="fas fa-plus mr-2"></i> Tambah Layanan';
+                            }
+                        }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Terjadi kesalahan saat menambahkan layanan',
+                            confirmButtonColor: '#009b97'
+                        });
                     });
                 }
             });
