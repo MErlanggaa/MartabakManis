@@ -448,7 +448,7 @@
             <!-- Add/Edit Service Form -->
             <div class="border border-gray-200 rounded-lg p-4">
                 <h4 class="font-semibold text-gray-900 mb-4" id="layananFormTitle">Tambah Layanan Baru</h4>
-                <form id="layananForm" enctype="multipart/form-data" class="space-y-4">
+                <form id="layananForm" enctype="multipart/form-data" class="space-y-4" data-no-loading>
                     @csrf
                     <input type="hidden" name="user_id" value="{{ Auth::id() }}">
                     <input type="hidden" id="layanan_id" name="layanan_id" value="">
@@ -1205,6 +1205,11 @@
                     })
                     .then(response => response.json())
                     .then(data => {
+                        // Hide loading screen if it was shown
+                        if (window.hideLoading) {
+                            window.hideLoading();
+                        }
+                        
                         // Restore button
                         if (submitBtn) {
                             submitBtn.disabled = false;
@@ -1218,28 +1223,37 @@
                             }
                         }
                         
-                        if (data.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Berhasil!',
-                                text: data.message || 'Layanan berhasil diperbarui!',
-                                confirmButtonColor: '#009b97',
-                                timer: 2000,
-                                showConfirmButton: false
-                            }).then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Gagal',
-                                text: 'Gagal memperbarui layanan: ' + (data.message || 'Unknown error'),
-                                confirmButtonColor: '#009b97'
-                            });
-                        }
+                        // Small delay to ensure loading screen is hidden before showing notification
+                        setTimeout(() => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil!',
+                                    text: data.message || 'Layanan berhasil diperbarui!',
+                                    confirmButtonColor: '#009b97',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Gagal',
+                                    text: 'Gagal memperbarui layanan: ' + (data.message || 'Unknown error'),
+                                    confirmButtonColor: '#009b97'
+                                });
+                            }
+                        }, 100);
                     })
                     .catch(error => {
                         console.error('Error:', error);
+                        
+                        // Hide loading screen if it was shown
+                        if (window.hideLoading) {
+                            window.hideLoading();
+                        }
+                        
                         // Restore button
                         if (submitBtn) {
                             submitBtn.disabled = false;
@@ -1253,12 +1267,14 @@
                             }
                         }
                         
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'Terjadi kesalahan saat memperbarui layanan',
-                            confirmButtonColor: '#009b97'
-                        });
+                        setTimeout(() => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Terjadi kesalahan saat memperbarui layanan',
+                                confirmButtonColor: '#009b97'
+                            });
+                        }, 100);
                     });
                 } else {
                     // Create new (kode yang sudah ada)
@@ -1271,6 +1287,11 @@
                     })
                     .then(response => response.json())
                     .then(data => {
+                        // Hide loading screen if it was shown
+                        if (window.hideLoading) {
+                            window.hideLoading();
+                        }
+                        
                         // Restore button
                         if (submitBtn) {
                             submitBtn.disabled = false;
@@ -1284,35 +1305,44 @@
                             }
                         }
                         
-                        if (data.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Upload Berhasil!',
-                                text: data.message || 'Layanan berhasil ditambahkan!',
-                                confirmButtonColor: '#009b97',
-                                timer: 2500,
-                                showConfirmButton: true,
-                                confirmButtonText: 'OK'
-                            }).then(() => {
-                                // Reset form
-                                layananForm.reset();
-                                document.getElementById('layanan_id').value = '';
-                                document.getElementById('layananFormTitle').textContent = 'Tambah Layanan Baru';
-                                
-                                // Reload to show new layanan
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Gagal',
-                                text: 'Gagal menambahkan layanan: ' + (data.message || 'Unknown error'),
-                                confirmButtonColor: '#009b97'
-                            });
-                        }
+                        // Small delay to ensure loading screen is hidden before showing notification
+                        setTimeout(() => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Upload Berhasil!',
+                                    text: data.message || 'Layanan berhasil ditambahkan!',
+                                    confirmButtonColor: '#009b97',
+                                    timer: 2500,
+                                    showConfirmButton: true,
+                                    confirmButtonText: 'OK'
+                                }).then(() => {
+                                    // Reset form
+                                    layananForm.reset();
+                                    document.getElementById('layanan_id').value = '';
+                                    document.getElementById('layananFormTitle').textContent = 'Tambah Layanan Baru';
+                                    
+                                    // Reload to show new layanan
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Gagal',
+                                    text: 'Gagal menambahkan layanan: ' + (data.message || 'Unknown error'),
+                                    confirmButtonColor: '#009b97'
+                                });
+                            }
+                        }, 100);
                     })
                     .catch(error => {
                         console.error('Error:', error);
+                        
+                        // Hide loading screen if it was shown
+                        if (window.hideLoading) {
+                            window.hideLoading();
+                        }
+                        
                         // Restore button
                         if (submitBtn) {
                             submitBtn.disabled = false;
@@ -1326,12 +1356,14 @@
                             }
                         }
                         
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'Terjadi kesalahan saat menambahkan layanan',
-                            confirmButtonColor: '#009b97'
-                        });
+                        setTimeout(() => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Terjadi kesalahan saat menambahkan layanan',
+                                confirmButtonColor: '#009b97'
+                            });
+                        }, 100);
                     });
                 }
             });

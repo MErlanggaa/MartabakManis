@@ -395,22 +395,22 @@
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                     <!-- Social Media Icons -->
                     <div class="flex items-center gap-4">
-                        <a href="#" class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="YouTube">
+                        <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="YouTube">
                             <i class="fab fa-youtube text-2xl"></i>
                         </a>
-                        <a href="#" class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="WhatsApp">
+                        <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="WhatsApp">
                             <i class="fab fa-whatsapp text-2xl"></i>
                 </a>
-                        <a href="#" class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Facebook">
+                        <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Facebook">
                     <i class="fab fa-facebook text-2xl"></i>
                 </a>
-                        <a href="#" class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="LinkedIn">
+                        <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="LinkedIn">
                     <i class="fab fa-linkedin text-2xl"></i>
                 </a>
-                        <a href="#" class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Instagram">
+                        <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Instagram">
                             <i class="fab fa-instagram text-2xl"></i>
                 </a>
-                        <a href="#" class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Twitter">
+                        <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Twitter">
                     <i class="fab fa-twitter text-2xl"></i>
                 </a>
             </div>
@@ -444,9 +444,11 @@
             function hideLoading() {
                 if (loadingScreen) {
                     loadingScreen.classList.add('fade-out');
+                    // Reduce timeout for faster hide
                     setTimeout(() => {
                         loadingScreen.classList.add('hidden');
-                    }, 300);
+                        loadingScreen.style.display = 'none';
+                    }, 150);
                 }
             }
             
@@ -475,6 +477,7 @@
                 if (link && link.href && 
                     !link.href.startsWith('javascript:') && 
                     !link.href.startsWith('#') && 
+                    link.href !== '#' &&
                     !link.hasAttribute('data-no-loading') &&
                     link.hostname === window.location.hostname &&
                     link.href !== window.location.href) {
