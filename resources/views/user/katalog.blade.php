@@ -5,17 +5,43 @@
 @section('styles')
 <style>
     /* Pagination Styling dengan warna harmonis */
+    .pagination {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .pagination .page-item {
+        margin: 0;
+    }
+    
     .pagination .page-link {
         color: #009b97;
         border-color: #e6f5f4;
         background-color: white;
         transition: all 0.3s ease;
+        padding: 0.5rem 0.75rem;
+        margin: 0 0.25rem;
+        min-width: 2.5rem;
+        text-align: center;
+        display: inline-block;
+    }
+    
+    @media (min-width: 768px) {
+        .pagination .page-link {
+            padding: 0.625rem 1rem;
+            margin: 0 0.375rem;
+            min-width: 3rem;
+        }
     }
     
     .pagination .page-link:hover {
         color: #007a77;
         background-color: #e6f5f4;
         border-color: #009b97;
+        transform: translateY(-2px);
     }
     
     .pagination .page-item.active .page-link {
@@ -29,6 +55,7 @@
         background-color: #f9fafb;
         border-color: #e5e7eb;
         cursor: not-allowed;
+        opacity: 0.6;
     }
 </style>
 @endsection
@@ -350,7 +377,7 @@
                 <div class="p-3 md:p-4 lg:p-5">
                     <!-- Product Name -->
                     <h3 class="text-sm md:text-base lg:text-lg font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-[#009b97] transition-colors leading-tight">
-                        {{ Str::words($item->nama, 14, '...') }}
+                        {{ Str::words($item->nama, 7, '...') }}
                     </h3>
                     
                     <!-- Description - Hidden on mobile, shown on md+ -->
@@ -444,9 +471,11 @@
 
     <!-- Pagination -->
     @if($layanan->hasPages())
-        <div class="mt-16 mb-8 flex justify-center">
-            <div class="bg-white rounded-xl shadow-md p-4 border border-gray-100">
-                {{ $layanan->appends(request()->query())->links() }}
+        <div class="mt-16 md:mt-20 lg:mt-24 mb-8 md:mb-12 lg:mb-16 flex justify-center">
+            <div class="bg-white rounded-xl shadow-md p-4 md:p-6 lg:p-8 border border-gray-100 w-full max-w-4xl">
+                <div class="flex justify-center">
+                    {{ $layanan->appends(request()->query())->links() }}
+                </div>
             </div>
         </div>
     @endif
