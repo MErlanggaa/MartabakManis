@@ -363,11 +363,11 @@
                         <div class="space-y-3">
                             <div class="flex items-center gap-3 text-gray-700">
                                 <i class="fas fa-phone text-[#009b97]"></i>
-                                <span class="text-sm">0812-3456-7890</span>
+                                <span class="text-sm">umkm.go</span>
                             </div>
                             <div class="flex items-center gap-3 text-gray-700">
                                 <i class="fas fa-envelope text-[#009b97]"></i>
-                                <span class="text-sm">umkm.go.id</span>
+                                <span class="text-sm">umkm.go</span>
                             </div>
                         </div>
                     </div>
