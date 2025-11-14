@@ -44,7 +44,7 @@
 
         <!-- Chat Input -->
         <div class="border-t bg-white p-4">
-            <form id="chat-form" class="flex gap-3">
+            <form id="chat-form" class="flex gap-3" data-no-loading>
                 @csrf
                 <div class="flex-1 relative">
                     <input type="text" 
