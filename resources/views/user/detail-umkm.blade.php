@@ -564,18 +564,63 @@
     // Distance
     function calculateDistance() {
         if (!userLocation) {
-            showToast('Lokasi Anda tidak tersedia. Pastikan GPS aktif.', 'warning');
+            // Try to get user location first
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    // Retry after getting location
+                    fetchDistance();
+                }, function(error) {
+                    showToast('Lokasi Anda tidak tersedia. Pastikan GPS aktif dan izinkan akses lokasi.', 'warning');
+                });
+            } else {
+                showToast('Lokasi Anda tidak tersedia. Pastikan GPS aktif.', 'warning');
+            }
             return;
         }
+        fetchDistance();
+    }
+    
+    function fetchDistance() {
+        if (!userLocation) {
+            showToast('Lokasi Anda tidak tersedia.', 'warning');
+            return;
+        }
+        
+        const distanceBtn = document.querySelector('button[onclick="calculateDistance()"]');
+        const originalBtnText = distanceBtn ? distanceBtn.innerHTML : '';
+        
+        if (distanceBtn) {
+            distanceBtn.disabled = true;
+            distanceBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menghitung...';
+        }
+        
         fetch(`/user/distance/{{ $umkm->id }}/${userLocation.lat}/${userLocation.lng}`)
             .then(response => response.json())
             .then(data => {
+                if (distanceBtn) {
+                    distanceBtn.disabled = false;
+                    distanceBtn.innerHTML = originalBtnText;
+                }
+                
                 if (data.distance !== undefined) {
                     document.getElementById('distance-text').textContent = `Jarak: ${data.distance} km`;
                     document.getElementById('distance-result').classList.remove('hidden');
+                } else {
+                    showToast('Gagal menghitung jarak', 'error');
                 }
             })
-            .catch(() => showToast('Gagal menghitung jarak', 'error'));
+            .catch((error) => {
+                if (distanceBtn) {
+                    distanceBtn.disabled = false;
+                    distanceBtn.innerHTML = originalBtnText;
+                }
+                console.error('Error:', error);
+                showToast('Gagal menghitung jarak', 'error');
+            });
     }
 
     // Toast with Tailwind
@@ -749,6 +794,7 @@
         const formData = new FormData(form);
         const comment = formData.get('comment');
         const rating = formData.get('rating');
+        const submitBtn = form.querySelector('button[type="submit"]');
         
         // Validate
         if (!comment || comment.trim().length < 10) {
@@ -771,6 +817,16 @@
             return;
         }
         
+        // Show loading animation
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Mengirim...';
+        
+        // Show loading screen overlay
+        if (window.showLoading) {
+            window.showLoading();
+        }
+        
         // Submit
         fetch(`/umkm/${umkmId}/comment`, {
             method: 'POST',
@@ -785,6 +841,15 @@
         })
         .then(response => response.json())
         .then(data => {
+            // Hide loading screen
+            if (window.hideLoading) {
+                window.hideLoading();
+            }
+            
+            // Restore button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+            
             if (data.success) {
                 Swal.fire({
                     icon: 'success',
@@ -807,6 +872,16 @@
         })
         .catch(error => {
             console.error('Error:', error);
+            
+            // Hide loading screen
+            if (window.hideLoading) {
+                window.hideLoading();
+            }
+            
+            // Restore button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+            
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
@@ -824,6 +899,7 @@
         const formData = new FormData(form);
         const comment = formData.get('comment');
         const rating = formData.get('rating');
+        const submitBtn = form.querySelector('button[type="submit"]');
         
         // Validate
         if (!comment || comment.trim().length < 10) {
@@ -846,6 +922,16 @@
             return;
         }
         
+        // Show loading animation
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Menyimpan...';
+        
+        // Show loading screen overlay
+        if (window.showLoading) {
+            window.showLoading();
+        }
+        
         // Submit
         fetch(`/comment/${commentId}`, {
             method: 'PUT',
@@ -860,6 +946,15 @@
         })
         .then(response => response.json())
         .then(data => {
+            // Hide loading screen
+            if (window.hideLoading) {
+                window.hideLoading();
+            }
+            
+            // Restore button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+            
             if (data.success) {
                 Swal.fire({
                     icon: 'success',
@@ -882,6 +977,16 @@
         })
         .catch(error => {
             console.error('Error:', error);
+            
+            // Hide loading screen
+            if (window.hideLoading) {
+                window.hideLoading();
+            }
+            
+            // Restore button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+            
             Swal.fire({
                 icon: 'error',
                 title: 'Error',

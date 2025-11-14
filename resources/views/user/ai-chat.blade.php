@@ -104,7 +104,7 @@
         minute: '2-digit' 
     });
 
-    function appendMessage(sender, text, isTyping = false) {
+    function appendMessage(sender, text, isTyping = false, isHtml = false) {
         const messageDiv = document.createElement('div');
         messageDiv.className = 'flex items-start gap-3 ' + (sender === 'user' ? 'flex-row-reverse' : '');
         
@@ -124,14 +124,23 @@
             `;
         } else {
             const typingClass = isTyping ? 'animate-pulse' : '';
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'bg-white rounded-2xl rounded-tl-none px-4 py-3 shadow-sm';
+            
+            if (isTyping) {
+                contentDiv.innerHTML = '<div class="flex gap-1"><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div></div>';
+            } else if (isHtml) {
+                contentDiv.innerHTML = text;
+            } else {
+                contentDiv.innerHTML = '<p class="text-gray-800 whitespace-pre-wrap">' + escapeHtml(text) + '</p>';
+            }
+            
             messageDiv.innerHTML = `
                 <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0 ${typingClass}">
                     <i class="fas fa-robot text-white text-sm"></i>
                 </div>
                 <div class="flex-1">
-                    <div class="bg-white rounded-2xl rounded-tl-none px-4 py-3 shadow-sm">
-                        ${isTyping ? '<div class="flex gap-1"><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div></div>' : '<p class="text-gray-800 whitespace-pre-wrap">' + escapeHtml(text) + '</p>'}
-                    </div>
+                    ${contentDiv.outerHTML}
                     ${!isTyping ? `<span class="text-xs text-gray-500 mt-1 block ml-2">${time}</span>` : ''}
                 </div>
             `;
@@ -139,6 +148,33 @@
         
         chatBox.appendChild(messageDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
+        
+        // After appending, find and add data-no-loading to pesan links
+        if (sender === 'ai' && !isTyping) {
+            setTimeout(() => {
+                const messageContent = messageDiv.querySelector('.bg-white.rounded-2xl');
+                if (messageContent) {
+                    // Find all links that might be pesan/WhatsApp links
+                    const links = messageContent.querySelectorAll('a[href*="wa.me"], a[href*="whatsapp"]');
+                    links.forEach(link => {
+                        const linkText = link.textContent.toLowerCase();
+                        if (linkText.includes('pesan') || link.href.includes('wa.me') || link.href.includes('whatsapp')) {
+                            link.setAttribute('data-no-loading', 'true');
+                        }
+                    });
+                    
+                    // Also check for buttons
+                    const buttons = messageContent.querySelectorAll('button');
+                    buttons.forEach(btn => {
+                        const btnText = btn.textContent.toLowerCase();
+                        const onclick = btn.getAttribute('onclick') || '';
+                        if (btnText.includes('pesan') || onclick.includes('wa.me') || onclick.includes('whatsapp') || onclick.includes('pesan')) {
+                            btn.setAttribute('data-no-loading', 'true');
+                        }
+                    });
+                }
+            }, 100);
+        }
         
         return messageDiv;
     }
@@ -178,7 +214,39 @@
             typingIndicator.remove();
             
             if (data.success) {
-                appendMessage('ai', data.reply);
+                // Check if reply contains HTML tags
+                const replyText = data.reply;
+                const hasHtml = /<[a-z][\s\S]*>/i.test(replyText);
+                
+                if (hasHtml) {
+                    // Parse HTML and add data-no-loading to pesan links
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = replyText;
+                    
+                    // Find and mark pesan/WhatsApp links
+                    const links = tempDiv.querySelectorAll('a');
+                    links.forEach(link => {
+                        const href = link.getAttribute('href') || '';
+                        const linkText = link.textContent.toLowerCase();
+                        if (href.includes('wa.me') || href.includes('whatsapp') || linkText.includes('pesan')) {
+                            link.setAttribute('data-no-loading', 'true');
+                        }
+                    });
+                    
+                    // Find and mark pesan buttons
+                    const buttons = tempDiv.querySelectorAll('button');
+                    buttons.forEach(btn => {
+                        const onclick = btn.getAttribute('onclick') || '';
+                        const btnText = btn.textContent.toLowerCase();
+                        if (onclick.includes('wa.me') || onclick.includes('whatsapp') || onclick.includes('pesan') || btnText.includes('pesan')) {
+                            btn.setAttribute('data-no-loading', 'true');
+                        }
+                    });
+                    
+                    appendMessage('ai', tempDiv.innerHTML, false, true);
+                } else {
+                    appendMessage('ai', replyText);
+                }
             } else {
                 appendMessage('ai', data.message || 'Maaf, terjadi kesalahan. Silakan coba lagi.');
             }

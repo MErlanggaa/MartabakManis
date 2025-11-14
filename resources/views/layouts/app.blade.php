@@ -17,15 +17,16 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
+            height: 100vh;
             background: linear-gradient(135deg, #ffffff 0%, #e0f7fa 100%);
-            z-index: 9999;
+            z-index: 99999;
             display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             opacity: 0;
             transition: opacity 0.3s ease-out;
+            overflow: hidden;
         }
         
         #loading-screen.fade-out {
@@ -158,51 +159,12 @@
             }
         }
         
-        /* Wave Animation Background */
-        .loading-waves {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 100px;
-            overflow: hidden;
-        }
-        
-        .wave {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 200%;
-            height: 100%;
-            background: linear-gradient(90deg, 
-                rgba(0, 155, 151, 0.1) 0%, 
-                rgba(0, 155, 151, 0.2) 50%, 
-                rgba(0, 155, 151, 0.1) 100%);
-            animation: waveMove 3s linear infinite;
-        }
-        
-        .wave:nth-child(2) {
-            animation-delay: -1s;
-            opacity: 0.5;
-        }
-        
-        @keyframes waveMove {
-            0% {
-                transform: translateX(0);
-            }
-            100% {
-                transform: translateX(-50%);
-            }
-        }
+        /* Wave Animation Background - Removed to fix green color issue */
     </style>
 </head>
 <body class="bg-white min-h-screen flex flex-col">
     <!-- Loading Screen -->
     <div id="loading-screen">
-        <div class="loading-waves">
-            <div class="wave"></div>
-            <div class="wave"></div>
-        </div>
         <img src="{{ asset('gambar/logo.jpeg') }}" alt="Logo UMKM" class="loading-logo object-contain">
         <div class="loading-spinner"></div>
         <div class="loading-text">Memuat UMKM.go</div>
@@ -488,6 +450,10 @@
                 }
             }
             
+            // Make functions globally available
+            window.showLoading = showLoading;
+            window.hideLoading = hideLoading;
+            
             // Hide loading screen on initial page load
             // Loading screen tidak muncul saat initial load, langsung hide
             function hideOnPageLoad() {
@@ -525,6 +491,22 @@
                     form.method.toLowerCase() === 'get' && 
                     !form.hasAttribute('data-no-loading')) {
                     showLoading();
+                }
+            });
+            
+            // Handle POST form submissions with loading indicator
+            document.addEventListener('submit', function(e) {
+                const form = e.target;
+                if (form.tagName === 'FORM' && 
+                    form.method.toLowerCase() === 'post' && 
+                    !form.hasAttribute('data-no-loading') &&
+                    !form.hasAttribute('data-no-full-loading')) {
+                    // Show a subtle loading overlay for POST requests
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn && !submitBtn.disabled) {
+                        // Button loading is handled in individual forms
+                        // This is just for page-level loading if needed
+                    }
                 }
             });
             

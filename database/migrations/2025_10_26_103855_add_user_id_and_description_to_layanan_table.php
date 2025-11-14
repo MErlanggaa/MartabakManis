@@ -12,8 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('layanan', function (Blueprint $table) {
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+        
+              if (!Schema::hasColumn('layanan', 'description')) {
             $table->text('description')->nullable()->after('price');
+        }
+
+        // Cek apakah kolom 'user_id' sudah ada
+        if (!Schema::hasColumn('layanan', 'user_id')) {
+            $table->bigInteger('user_id')->unsigned()->nullable()->after('id');
+        }
         });
     }
 
