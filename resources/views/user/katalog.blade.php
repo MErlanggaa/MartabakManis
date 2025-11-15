@@ -413,10 +413,10 @@
                             {{ Str::limit($item->nama,  20, '...') }}
                     </h3>
                     
-                    <!-- Description - Hidden on mobile, shown on md+ -->
+                    <!-- Description - Shown on all devices with truncate -->
                     @if($item->description)
-                        <p class="hidden md:block text-gray-600 text-xs md:text-sm mb-2 md:mb-4 line-clamp-2 leading-relaxed">
-                            {{ Str::limit($item->description, 80) }}
+                        <p class="text-gray-600 text-xs md:text-sm mb-2 md:mb-4 line-clamp-2 leading-relaxed">
+                            {{ Str::limit($item->description, 60, '...') }}
                         </p>
                     @endif
                     

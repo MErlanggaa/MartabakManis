@@ -535,7 +535,7 @@
                                     </div>
                                     <div class="flex-1">
                                         <h5 class="font-semibold text-gray-900">{{ $layanan->nama }}</h5>
-                                        <p class="text-sm text-gray-600 mb-1">{{ $layanan->description ?? 'Tidak ada deskripsi' }}</p>
+                                        <p class="text-sm text-gray-600 mb-1">{{ $layanan->description ? Str::limit($layanan->description, 100, '...') : 'Tidak ada deskripsi' }}</p>
                                         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                                             Rp {{ number_format($layanan->price, 0, ',', '.') }}
                                         </span>
