@@ -175,9 +175,9 @@ class UserAIChatController extends Controller
                 
                 // If we have UMKM data, override AI reply with a better response
                 if (!empty($foundUmkm)) {
-                    $reply = "Berikut adalah UMKM yang sudah bergabung di platform kami:";
+                    $reply = "Berikut adalah UMKM yang sudah bergabung di UMKM.go kami:";
                 } else {
-                    $reply = "Maaf, saat ini belum ada UMKM yang terdaftar di platform kami.";
+                    $reply = "Maaf, saat ini belum ada UMKM yang terdaftar di UMKM.go kami.";
                 }
             } else {
                 // Get layanan recommendations

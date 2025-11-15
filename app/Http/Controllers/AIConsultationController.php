@@ -8,13 +8,12 @@ use Illuminate\Support\Facades\Auth;
 
 class AIConsultationController extends Controller
 {
-    private $huggingFaceApiKey;
-    private $openaiApiKey;
+    private $geminiApiKey;
 
     public function __construct()
     {
-        $this->huggingFaceApiKey = config('services.huggingface.api_key');
-        $this->openaiApiKey = config('services.openai.api_key');
+        // Gemini API Key
+        $this->geminiApiKey = 'AIzaSyCuvo30wJaTFgwVWvY88_xEOWrkeK5aQz4';
     }
 
     public function index()
@@ -41,7 +40,7 @@ class AIConsultationController extends Controller
         // Prepare context for AI
         $context = $this->buildContext($umkm, $request->message);
         
-        // Try different AI services
+        // Get AI response from Gemini
         $response = $this->getAIResponse($context, $request->message);
         
         if ($response['success']) {
@@ -60,109 +59,119 @@ class AIConsultationController extends Controller
 
     private function buildContext($umkm, $userMessage)
     {
-        $context = "Anda adalah konsultan bisnis AI yang membantu UMKM. ";
-        $context .= "UMKM ini bernama '{$umkm->nama}', jenis bisnis: {$umkm->jenis_umkm}. ";
-        $context .= "Deskripsi: {$umkm->description}. ";
+        // Build comprehensive context for professional consultant
+        $context = "Anda adalah seorang Konsultan Bisnis Profesional yang berpengalaman dalam membantu UMKM (Usaha Mikro, Kecil, dan Menengah) di Indonesia. ";
+        $context .= "Anda memiliki keahlian dalam strategi bisnis, pemasaran digital, manajemen keuangan, operasional, dan pengembangan bisnis. ";
+        $context .= "Gaya komunikasi Anda jelas, praktis, mudah dipahami, dan memberikan solusi yang dapat langsung diterapkan.\n\n";
+        
+        $context .= "INFORMASI UMKM:\n";
+        $context .= "- Nama UMKM: {$umkm->nama}\n";
+        $context .= "- Jenis Bisnis: {$umkm->jenis_umkm}\n";
+        $context .= "- Deskripsi: " . ($umkm->description ?? 'Tidak ada deskripsi') . "\n";
         
         // Add financial context if available
         $keuntungan = $umkm->keuntungan()->latest()->first();
         if ($keuntungan) {
-            $context .= "Data keuangan terbaru: Pendapatan Rp " . number_format($keuntungan->pendapatan) . 
-                       ", Pengeluaran Rp " . number_format($keuntungan->pengeluaran) . 
-                       ", Keuntungan bersih Rp " . number_format($keuntungan->keuntungan_bersih) . 
-                       ", Jumlah transaksi: {$keuntungan->jumlah_transaksi}. ";
+            $context .= "\nDATA KEUANGAN TERBARU:\n";
+            $context .= "- Pendapatan: Rp " . number_format($keuntungan->pendapatan, 0, ',', '.') . "\n";
+            $context .= "- Pengeluaran: Rp " . number_format($keuntungan->pengeluaran, 0, ',', '.') . "\n";
+            $context .= "- Keuntungan Bersih: Rp " . number_format($keuntungan->keuntungan_bersih, 0, ',', '.') . "\n";
+            $context .= "- Jumlah Transaksi: {$keuntungan->jumlah_transaksi}\n";
         }
         
-        $context .= "Pertanyaan user: {$userMessage}. ";
-        $context .= "Berikan saran yang praktis dan dapat diterapkan untuk UMKM ini. ";
-        $context .= "Fokus pada peningkatan penjualan, efisiensi operasional, dan strategi digital marketing.";
+        $context .= "\nPERTANYAAN DARI PEMILIK UMKM:\n";
+        $context .= "{$userMessage}\n\n";
+        
+        $context .= "INSTRUKSI UNTUK ANDA:\n";
+        $context .= "1. Berikan jawaban yang profesional, praktis, dan mudah dipahami oleh pemilik UMKM\n";
+        $context .= "2. Fokus pada solusi yang dapat langsung diterapkan dengan sumber daya terbatas\n";
+        $context .= "3. Berikan saran yang spesifik dan relevan dengan jenis bisnis dan kondisi UMKM ini\n";
+        $context .= "4. Jika memungkinkan, berikan langkah-langkah konkret yang dapat diikuti\n";
+        $context .= "5. Gunakan bahasa Indonesia yang jelas dan ramah\n";
+        $context .= "6. Jika pertanyaan tentang keuangan, gunakan data keuangan yang tersedia untuk analisis\n";
+        $context .= "7. Berikan motivasi dan dukungan positif untuk pemilik UMKM\n";
+        $context .= "8. Jika perlu, ajukan pertanyaan klarifikasi untuk memberikan saran yang lebih tepat\n\n";
+        
+        $context .= "Jawablah dengan format yang rapi, gunakan poin-poin jika perlu, dan pastikan jawaban Anda membantu pemilik UMKM memahami dan menerapkan saran Anda.";
         
         return $context;
     }
 
     private function getAIResponse($context, $userMessage)
     {
-        // Try OpenAI first
-        if ($this->openaiApiKey) {
-            $response = $this->tryOpenAI($context, $userMessage);
-            if ($response['success']) {
-                return $response;
-            }
-        }
-
-        // Fallback to Hugging Face
-        if ($this->huggingFaceApiKey) {
-            $response = $this->tryHuggingFace($context, $userMessage);
-            if ($response['success']) {
-                return $response;
-            }
+        // Use Gemini API
+        $response = $this->tryGemini($context, $userMessage);
+        if ($response['success']) {
+            return $response;
         }
 
         // Fallback to simple rule-based response
         return $this->getFallbackResponse($userMessage);
     }
 
-    private function tryOpenAI($context, $userMessage)
+    private function tryGemini($context, $userMessage)
     {
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->openaiApiKey,
-                'Content-Type' => 'application/json',
-            ])->timeout(30)->post('https://api.openai.com/v1/chat/completions', [
-                'model' => 'gpt-3.5-turbo',
-                'messages' => [
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' . $this->geminiApiKey;
+            
+            $response = Http::timeout(60)->post($url, [
+                'contents' => [
                     [
-                        'role' => 'system',
-                        'content' => $context
-                    ],
-                    [
-                        'role' => 'user',
-                        'content' => $userMessage
+                        'parts' => [
+                            [
+                                'text' => $context
+                            ]
+                        ]
                     ]
                 ],
-                'max_tokens' => 500,
-                'temperature' => 0.7
-            ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                return [
-                    'success' => true,
-                    'message' => $data['choices'][0]['message']['content']
-                ];
-            }
-        } catch (\Exception $e) {
-            \Log::error('OpenAI API Error: ' . $e->getMessage());
-        }
-
-        return ['success' => false];
-    }
-
-    private function tryHuggingFace($context, $userMessage)
-    {
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->huggingFaceApiKey,
-                'Content-Type' => 'application/json',
-            ])->timeout(30)->post('https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium', [
-                'inputs' => $context . ' ' . $userMessage,
-                'parameters' => [
-                    'max_length' => 200,
-                    'temperature' => 0.7
+                'generationConfig' => [
+                    'temperature' => 0.7,
+                    'topK' => 40,
+                    'topP' => 0.95,
+                    'maxOutputTokens' => 2048,
+                ],
+                'safetySettings' => [
+                    [
+                        'category' => 'HARM_CATEGORY_HARASSMENT',
+                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                    ],
+                    [
+                        'category' => 'HARM_CATEGORY_HATE_SPEECH',
+                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                    ],
+                    [
+                        'category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                    ],
+                    [
+                        'category' => 'HARM_CATEGORY_DANGEROUS_CONTENT',
+                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                    ]
                 ]
             ]);
 
             if ($response->successful()) {
                 $data = $response->json();
-                if (isset($data[0]['generated_text'])) {
+                
+                // Extract response from Gemini API
+                if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+                    $message = $data['candidates'][0]['content']['parts'][0]['text'];
+                    
+                    // Clean up the response
+                    $message = trim($message);
+                    
                     return [
                         'success' => true,
-                        'message' => $data[0]['generated_text']
+                        'message' => $message
                     ];
+                } else {
+                    \Log::error('Gemini API - Unexpected response structure: ' . json_encode($data));
                 }
+            } else {
+                \Log::error('Gemini API Error: ' . $response->body());
             }
         } catch (\Exception $e) {
-            \Log::error('Hugging Face API Error: ' . $e->getMessage());
+            \Log::error('Gemini API Exception: ' . $e->getMessage());
         }
 
         return ['success' => false];

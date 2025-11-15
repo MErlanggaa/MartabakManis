@@ -73,14 +73,8 @@
                         class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-full transition-colors">
                     📋 Rekomendasi menu
                 </button>
-                <button onclick="sendQuickQuestion('Apa produk terlaris?')" 
-                        class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-full transition-colors">
-                    🏆 Produk terlaris
-                </button>
-                <button onclick="sendQuickQuestion('Harga produk')" 
-                        class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-full transition-colors">
-                    💰 Harga produk
-                </button>
+              
+             
                 <button onclick="sendQuickQuestion('Cara pemesanan')" 
                         class="text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 px-3 py-1 rounded-full transition-colors">
                     📦 Cara pemesanan
@@ -211,7 +205,7 @@
         
         const titleText = document.createElement('p');
         titleText.className = 'text-gray-800 mb-3 font-medium';
-        titleText.textContent = 'Berikut adalah UMKM yang sudah bergabung:';
+        titleText.textContent = 'Berikut adalah UMKM yang sudah bergabung di UMKM.go :';
         messageBubble.appendChild(titleText);
         messageBubble.appendChild(cardsContainer);
         
