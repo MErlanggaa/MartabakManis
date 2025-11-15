@@ -13,7 +13,7 @@ class AIConsultationController extends Controller
     public function __construct()
     {
         // Gemini API Key
-        $this->geminiApiKey = 'AIzaSyCuvo30wJaTFgwVWvY88_xEOWrkeK5aQz4';
+        $this->geminiApiKey = 'AIzaSyCO29fXZo3WaZKeHVPgp-bkazpEd2VBczg';
     }
 
     public function index()
@@ -50,6 +50,14 @@ class AIConsultationController extends Controller
                 'timestamp' => now()->format('Y-m-d H:i:s')
             ]);
         } else {
+            // Check if it's a rate limit error
+            if (isset($response['error']) && $response['error'] === 'rate_limit') {
+                return response()->json([
+                    'success' => false,
+                    'message' => $response['message'] ?? 'Maaf, batas penggunaan API telah tercapai. Silakan coba lagi dalam beberapa saat.'
+                ], 429); // 429 Too Many Requests
+            }
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Maaf, layanan AI sedang tidak tersedia. Silakan coba lagi nanti.'
@@ -107,10 +115,23 @@ class AIConsultationController extends Controller
     {
         // Use Gemini API
         $response = $this->tryGemini($context, $userMessage);
-        if ($response['success']) {
+        
+        // Log the response for debugging
+        \Log::info('AI Response Check', [
+            'success' => $response['success'] ?? false,
+            'has_message' => isset($response['message']),
+            'message_preview' => isset($response['message']) ? substr($response['message'], 0, 100) : 'No message'
+        ]);
+        
+        if ($response['success'] && !empty($response['message'])) {
             return $response;
         }
 
+        // If Gemini fails, log why and use fallback
+        \Log::warning('Gemini API failed, using fallback', [
+            'response' => $response
+        ]);
+        
         // Fallback to simple rule-based response
         return $this->getFallbackResponse($userMessage);
     }
@@ -118,8 +139,15 @@ class AIConsultationController extends Controller
     private function tryGemini($context, $userMessage)
     {
         try {
-            // Use gemini-1.5-flash for free tier (faster and free)
-            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . $this->geminiApiKey;
+            // Use gemini-2.5-flash (as shown in user's dashboard)
+            // This matches the model in Google AI Studio dashboard
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . $this->geminiApiKey;
+            
+            \Log::info('Calling Gemini API', [
+                'url' => str_replace($this->geminiApiKey, '***', $url),
+                'context_length' => strlen($context),
+                'message_length' => strlen($userMessage)
+            ]);
             
             $response = Http::timeout(60)->post($url, [
                 'contents' => [
@@ -160,13 +188,26 @@ class AIConsultationController extends Controller
             if ($response->successful()) {
                 $data = $response->json();
                 
-                // Log for debugging
-                \Log::info('Gemini API Response', ['data' => $data]);
+                // Log for debugging (but don't log full response if too long)
+                \Log::info('Gemini API Response Received', [
+                    'has_candidates' => isset($data['candidates']),
+                    'candidates_count' => isset($data['candidates']) ? count($data['candidates']) : 0,
+                    'first_candidate_keys' => isset($data['candidates'][0]) ? array_keys($data['candidates'][0]) : []
+                ]);
                 
                 // Check if response was blocked
-                if (isset($data['candidates'][0]['finishReason']) && $data['candidates'][0]['finishReason'] === 'SAFETY') {
-                    \Log::warning('Gemini API - Response blocked by safety settings');
-                    return ['success' => false, 'message' => 'Response blocked by safety settings'];
+                if (isset($data['candidates'][0]['finishReason'])) {
+                    $finishReason = $data['candidates'][0]['finishReason'];
+                    \Log::info('Gemini finishReason', ['reason' => $finishReason]);
+                    
+                    if ($finishReason === 'SAFETY') {
+                        \Log::warning('Gemini API - Response blocked by safety settings');
+                        return ['success' => false, 'message' => 'Response blocked by safety settings'];
+                    }
+                    
+                    if ($finishReason === 'MAX_TOKENS') {
+                        \Log::warning('Gemini API - Response truncated due to max tokens');
+                    }
                 }
                 
                 // Extract response from Gemini API
@@ -179,27 +220,60 @@ class AIConsultationController extends Controller
                     // Remove "AI Konsultan:" prefix if present (we'll add it in the view)
                     $message = preg_replace('/^AI\s*Konsultan\s*:\s*/i', '', $message);
                     
+                    \Log::info('Gemini API Success', [
+                        'message_length' => strlen($message),
+                        'message_preview' => substr($message, 0, 150)
+                    ]);
+                    
                     return [
                         'success' => true,
                         'message' => $message
                     ];
                 } else {
                     \Log::error('Gemini API - Unexpected response structure', [
-                        'response' => $data,
-                        'keys' => isset($data['candidates'][0]) ? array_keys($data['candidates'][0]) : []
+                        'response_keys' => array_keys($data),
+                        'candidates_structure' => isset($data['candidates'][0]) ? [
+                            'keys' => array_keys($data['candidates'][0]),
+                            'has_content' => isset($data['candidates'][0]['content']),
+                            'content_keys' => isset($data['candidates'][0]['content']) ? array_keys($data['candidates'][0]['content']) : []
+                        ] : 'No candidates'
                     ]);
                 }
             } else {
                 $errorBody = $response->body();
-                \Log::error('Gemini API Error', [
-                    'status' => $response->status(),
-                    'body' => $errorBody
+                $statusCode = $response->status();
+                
+                \Log::error('Gemini API HTTP Error', [
+                    'status' => $statusCode,
+                    'body' => substr($errorBody, 0, 500) // Limit log size
                 ]);
                 
                 // Try to extract error message
                 $errorData = json_decode($errorBody, true);
                 if (isset($errorData['error']['message'])) {
-                    \Log::error('Gemini API Error Message: ' . $errorData['error']['message']);
+                    $errorMessage = $errorData['error']['message'];
+                    \Log::error('Gemini API Error Message: ' . $errorMessage);
+                    
+                    // Check for rate limit error (429 or rate limit message)
+                    if ($statusCode == 429 || 
+                        strpos(strtolower($errorMessage), 'rate limit') !== false ||
+                        strpos(strtolower($errorMessage), 'quota') !== false ||
+                        strpos(strtolower($errorMessage), 'resource exhausted') !== false) {
+                        \Log::warning('Gemini API Rate Limit Exceeded - RPM limit reached!');
+                        
+                        // Return a user-friendly message
+                        return [
+                            'success' => false,
+                            'message' => 'rate_limit',
+                            'error' => 'Maaf, batas penggunaan API telah tercapai. Silakan coba lagi dalam beberapa saat. Free tier memiliki limit 10 request per menit.'
+                        ];
+                    }
+                    
+                    // If API key is invalid
+                    if (strpos($errorMessage, 'API key') !== false || 
+                        strpos($errorMessage, 'invalid') !== false) {
+                        \Log::error('Gemini API Key might be invalid!');
+                    }
                 }
             }
         } catch (\Exception $e) {

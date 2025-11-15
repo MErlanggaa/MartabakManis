@@ -266,8 +266,11 @@
             },
             body: JSON.stringify({ message: message })
         })
-        .then(response => response.json())
-        .then(data => {
+        .then(response => {
+            const status = response.status;
+            return response.json().then(data => ({ status, data }));
+        })
+        .then(({ status, data }) => {
             // Remove typing indicator
             const typing = document.getElementById('typing-indicator');
             if (typing) typing.remove();
@@ -275,7 +278,12 @@
             if (data.success) {
                 addMessage(data.response, 'ai');
             } else {
-                addMessage('Maaf, terjadi kesalahan. Silakan coba lagi.', 'ai');
+                // Check if it's a rate limit error (429)
+                if (status === 429) {
+                    addMessage('⚠️ ' + (data.message || 'Maaf, batas penggunaan API telah tercapai. Free tier memiliki limit 10 request per menit. Silakan tunggu sebentar dan coba lagi.'), 'ai');
+                } else {
+                    addMessage(data.message || 'Maaf, terjadi kesalahan. Silakan coba lagi.', 'ai');
+                }
             }
         })
         .catch(error => {
