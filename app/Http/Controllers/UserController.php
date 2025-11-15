@@ -667,7 +667,24 @@ class UserController extends Controller
             ->where('id', '!=', $layanan->id) // Exclude current layanan
             ->with('umkm.user')
             ->limit(8)
-            ->get();
+            ->get()
+            ->map(function($item) {
+                $similarUmkm = $item->umkm->first();
+                
+                // Calculate rating for layanan
+                $item->rating_layanan = Comment::where('layanan_id', $item->id)->avg('rating') ?? 0;
+                
+                // Calculate rating for UMKM
+                if ($similarUmkm) {
+                    $item->rating_umkm = Comment::where('umkm_id', $similarUmkm->id)
+                        ->whereNull('layanan_id')
+                        ->avg('rating') ?? 0;
+                    $item->umkm_latitude = $similarUmkm->latitude;
+                    $item->umkm_longitude = $similarUmkm->longitude;
+                }
+                
+                return $item;
+            });
         
         // Get comments for this layanan with user relation, ordered by newest first
         $commentsLayanan = Comment::where('layanan_id', $layanan->id)

@@ -46,8 +46,94 @@ class UserAIChatController extends Controller
 
             $data = $response->json();
             
-            // Handle response dari API
-            $reply = $data['reply'] ?? $data['answer'] ?? $data['response'] ?? 'Maaf, saya tidak dapat menjawab saat ini.';
+            // Handle response dari API - support multiple formats
+            // AI API might return: {"intent":"qa","answer":"...","umkm_list":[],"recommendations":[]}
+            // Or: {"reply":"..."} or {"answer":"..."}
+            // Or: {"reply":"{\"intent\":\"qa\",\"answer\":\"...\"}"} (nested JSON string)
+            
+            $reply = null;
+            
+            // First, check if data directly contains 'answer' field (most common case)
+            if (isset($data['answer']) && is_string($data['answer'])) {
+                $reply = $data['answer'];
+            }
+            // Check if data contains 'reply' field
+            elseif (isset($data['reply'])) {
+                $rawReply = $data['reply'];
+                
+                // If reply is a JSON string, parse it
+                if (is_string($rawReply)) {
+                    // Check if it's a JSON string
+                    if (strpos(trim($rawReply), '{') === 0) {
+                        $decoded = json_decode($rawReply, true);
+                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                            // Response is JSON, extract answer
+                            $reply = $decoded['answer'] ?? $decoded['reply'] ?? $rawReply;
+                        } else {
+                            // Not valid JSON, use as is
+                            $reply = $rawReply;
+                        }
+                    } else {
+                        // Not JSON, use as is
+                        $reply = $rawReply;
+                    }
+                } else {
+                    // Already an array or object
+                    if (is_array($rawReply)) {
+                        $reply = $rawReply['answer'] ?? $rawReply['reply'] ?? json_encode($rawReply);
+                    } else {
+                        $reply = $rawReply;
+                    }
+                }
+            }
+            // Check if data contains 'response' field
+            elseif (isset($data['response'])) {
+                $reply = is_string($data['response']) ? $data['response'] : json_encode($data['response']);
+            }
+            // If data itself is the answer (direct structure)
+            elseif (isset($data['intent']) && isset($data['answer'])) {
+                $reply = $data['answer'];
+            }
+            
+            // Fallback: if still null, try to extract from any field
+            if ($reply === null) {
+                // Try to find any text field
+                foreach (['answer', 'reply', 'response', 'message', 'text'] as $field) {
+                    if (isset($data[$field]) && is_string($data[$field])) {
+                        $reply = $data[$field];
+                        break;
+                    }
+                }
+            }
+            
+            // Final fallback
+            if ($reply === null || empty($reply)) {
+                $reply = 'Maaf, saya tidak dapat menjawab saat ini.';
+                Log::warning('AI Chat - Could not extract reply from response', [
+                    'data_keys' => array_keys($data),
+                    'data_preview' => Str::limit(json_encode($data), 200)
+                ]);
+            }
+            
+            // Clean up reply - remove JSON formatting if it's still there
+            if (is_string($reply) && (strpos(trim($reply), '{"intent"') === 0 || strpos(trim($reply), '{"answer"') === 0)) {
+                $decoded = json_decode($reply, true);
+                if (json_last_error() === JSON_ERROR_NONE && isset($decoded['answer'])) {
+                    $reply = $decoded['answer'];
+                }
+            }
+            
+            // Remove markdown formatting (** for bold)
+            if (is_string($reply)) {
+                $reply = preg_replace('/\*\*(.*?)\*\*/', '$1', $reply); // Remove **bold**
+                $reply = preg_replace('/\*(.*?)\*/', '$1', $reply); // Remove *italic*
+            }
+            
+            // Check if question is about "cara pemesanan" (how to order)
+            $isCaraPemesanan = preg_match('/\b(cara|bagaimana|how)\s+(pesan|pemesanan|order|memesan|memesan|beli|membeli)\b/i', $question);
+            if ($isCaraPemesanan) {
+                $reply = "Untuk melakukan pemesanan, silakan ikuti langkah-langkah berikut:\n\n1. Klik layanan yang Anda inginkan\n2. Setelah masuk ke halaman detail layanan, Anda dapat:\n   - Klik tombol \"Hubungi Penjual\" untuk menghubungi UMKM via WhatsApp\n   - Klik tombol social media (Instagram) jika UMKM memiliki akun Instagram\n   - Klik tombol e-commerce (Shopee/Tokopedia) jika UMKM memiliki toko online\n   - Klik tombol \"Lihat Lokasi\" untuk melihat lokasi UMKM di peta\n\nPilih metode yang paling nyaman untuk Anda!";
+            }
 
             // Validate AI response with database - check if mentioned data exists
             $validationResult = $this->validateAIResponseWithDatabase($reply, $question);
@@ -63,20 +149,40 @@ class UserAIChatController extends Controller
                 $correctedReply = $this->requestCorrectedResponse($question, $validationResult['missing_data'], $databaseContext);
                 
                 if ($correctedReply) {
+                    // Clean corrected reply too
+                    if (is_string($correctedReply) && (strpos($correctedReply, '{"intent"') === 0 || strpos($correctedReply, '{"answer"') === 0)) {
+                        $decoded = json_decode($correctedReply, true);
+                        if (json_last_error() === JSON_ERROR_NONE && isset($decoded['answer'])) {
+                            $correctedReply = $decoded['answer'];
+                        }
+                    }
                     $reply = $correctedReply;
                     // Re-validate the corrected response
                     $validationResult = $this->validateAIResponseWithDatabase($reply, $question);
                 }
             }
             
+            // Check if question is about UMKM list
+            $isUmkmList = preg_match('/\b(umkm|toko|daftar|list|terdaftar|yang ada|sudah bergabung|bergabung|join)\b/i', $question);
+            
             // Extract menu/layanan names from validated AI response
-            $foundLayanan = $this->validateAndFindLayanan($reply, $question);
+            $foundLayanan = [];
+            $foundUmkm = [];
+            
+            if ($isUmkmList) {
+                // Get UMKM list from database
+                $foundUmkm = $this->getUmkmList($request);
+            } else {
+                // Get layanan recommendations
+                $foundLayanan = $this->validateAndFindLayanan($reply, $question, $request);
+            }
             
             // Log for debugging
             Log::info('AI Chat - Final Response', [
                 'question' => $question,
                 'reply_length' => strlen($reply),
-                'found_count' => count($foundLayanan),
+                'found_layanan_count' => count($foundLayanan),
+                'found_umkm_count' => count($foundUmkm),
                 'found_ids' => array_column($foundLayanan, 'id'),
                 'was_corrected' => isset($correctedReply)
             ]);
@@ -84,7 +190,8 @@ class UserAIChatController extends Controller
             return response()->json([
                 'success' => true, 
                 'reply' => $reply,
-                'layanan' => $foundLayanan // Send found layanan data
+                'layanan' => $foundLayanan, // Send found layanan data
+                'umkm' => $foundUmkm // Send found UMKM data
             ]);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             Log::error('AI chat connection error: ' . $e->getMessage());
@@ -343,7 +450,7 @@ class UserAIChatController extends Controller
      * STRICT VALIDATION: Only return data that actually exists in database
      * For recommendations: Sort by views and rating
      */
-    private function validateAndFindLayanan($aiReply, $question)
+    private function validateAndFindLayanan($aiReply, $question, $request = null)
     {
         // Check if question is about menu recommendation or asking for services
         $isMenuRecommendation = preg_match('/\b(rekomendasi|menu|produk|makanan|minuman|layanan|berikan|tampilkan|ada|tersedia|sedia|punya)\b/i', $question);
@@ -352,13 +459,20 @@ class UserAIChatController extends Controller
             return [];
         }
 
+        // Check if question is about nearby/distance-based recommendations
+        $isNearbyRecommendation = preg_match('/\b(dekat|sekitar|jarak|tidak jauh|nearby|close|distance)\b/i', $question);
+        
+        // Get user location if available
+        $userLat = $request ? $request->input('user_lat') : null;
+        $userLng = $request ? $request->input('user_lng') : null;
+
         // Check if this is a general recommendation request (not specific menu/UMKM)
         $isGeneralRecommendation = preg_match('/\b(rekomendasi|rekomendasikan)\b/i', $question) && 
                                    !preg_match('/\b(dari|oleh|nama|umkm|toko)\b/i', $question);
 
-        // If general recommendation, get top layanan by views and rating
+        // If general recommendation, get top layanan by views and rating (with distance if available)
         if ($isGeneralRecommendation) {
-            return $this->getRecommendedLayanan();
+            return $this->getRecommendedLayanan($userLat, $userLng, $isNearbyRecommendation);
         }
 
         // Extract potential menu names from AI reply
@@ -447,7 +561,7 @@ class UserAIChatController extends Controller
 
         // If no specific match found but it's a recommendation request, get top recommendations
         if (empty($foundLayanan) && $isMenuRecommendation) {
-            return $this->getRecommendedLayanan();
+            return $this->getRecommendedLayanan($userLat, $userLng, $isNearbyRecommendation);
         }
         
         // Log what was found for debugging
@@ -472,16 +586,30 @@ class UserAIChatController extends Controller
     
     /**
      * Get recommended layanan based on views and rating
+     * Supports distance-based filtering if user location is provided
      */
-    private function getRecommendedLayanan()
+    private function getRecommendedLayanan($userLat = null, $userLng = null, $isNearby = false)
     {
         // Get all layanan with their UMKM
-        $allLayanan = Layanan::with(['umkm.user', 'comments'])
-            ->whereHas('umkm') // Only get layanan that have UMKM
-            ->get();
+        $query = Layanan::with(['umkm.user', 'comments'])
+            ->whereHas('umkm'); // Only get layanan that have UMKM
         
-        // Calculate score for each layanan (rating + views)
-        $layananWithScore = $allLayanan->map(function($item) {
+        // If nearby recommendation and user location is available, filter by distance
+        if ($isNearby && $userLat && $userLng) {
+            $maxDistance = 15; // 15 km radius
+            $query->whereHas('umkm', function($q) use ($userLat, $userLng, $maxDistance) {
+                $q->whereRaw("
+                    (6371 * acos(cos(radians(?)) * cos(radians(latitude)) *
+                    cos(radians(longitude) - radians(?)) + sin(radians(?)) *
+                    sin(radians(latitude)))) <= ?
+                ", [$userLat, $userLng, $userLat, $maxDistance]);
+            });
+        }
+        
+        $allLayanan = $query->get();
+        
+        // Calculate score for each layanan (rating + views + distance if available)
+        $layananWithScore = $allLayanan->map(function($item) use ($userLat, $userLng, $isNearby) {
             $umkm = $item->umkm->first();
             if (!$umkm) {
                 return null;
@@ -494,20 +622,35 @@ class UserAIChatController extends Controller
             // Get views
             $views = $item->views ?? 0;
             
+            // Calculate distance if user location is available
+            $distance = null;
+            if ($userLat && $userLng && $umkm->latitude && $umkm->longitude) {
+                $distance = $this->calculateDistance($userLat, $userLng, $umkm->latitude, $umkm->longitude);
+            }
+            
             // Calculate score: Rating weighted 70%, Views weighted 30%
-            // Normalize views (assume max views is 10000, if more, cap at 10000)
+            // If nearby, add distance bonus (closer = better)
             $normalizedViews = min($views, 10000) / 10000;
             $score = ($ratingLayanan * 0.7) + ($normalizedViews * 0.3);
             
+            // Add distance bonus for nearby recommendations (closer = higher score)
+            if ($isNearby && $distance !== null) {
+                $distanceBonus = max(0, (15 - $distance) / 15) * 0.2; // Max 20% bonus for very close
+                $score += $distanceBonus;
+            }
+            
+            $formattedData = $this->formatLayananData($item, $umkm, $distance);
+            
             return [
-                'data' => $this->formatLayananData($item, $umkm),
+                'data' => $formattedData,
                 'rating' => round($ratingLayanan, 1),
                 'views' => $views,
+                'distance' => $distance,
                 'score' => $score
             ];
         })
         ->filter() // Remove null values
-        ->sortByDesc('score') // Sort by score (rating + views)
+        ->sortByDesc('score') // Sort by score (rating + views + distance)
         ->take(5) // Get top 5
         ->map(function($item) {
             return $item['data']; // Return only the formatted data
@@ -517,15 +660,76 @@ class UserAIChatController extends Controller
         
         Log::info('AI Chat - Recommended Layanan', [
             'count' => count($layananWithScore),
-            'layanan_names' => array_column($layananWithScore, 'nama'),
-            'scores' => $allLayanan->map(function($item) {
-                $rating = Comment::where('layanan_id', $item->id)->avg('rating') ?? 0;
-                $views = $item->views ?? 0;
-                return ['nama' => $item->nama, 'rating' => $rating, 'views' => $views];
-            })->take(5)->toArray()
+            'is_nearby' => $isNearby,
+            'has_user_location' => ($userLat && $userLng),
+            'layanan_names' => array_column($layananWithScore, 'nama')
         ]);
         
         return $layananWithScore;
+    }
+    
+    /**
+     * Get UMKM list for display as cards
+     */
+    private function getUmkmList($request)
+    {
+        $userLat = $request->input('user_lat');
+        $userLng = $request->input('user_lng');
+        
+        // Get all UMKM
+        $query = UMKM::with(['layanan', 'user']);
+        
+        // If user location is available, calculate distance
+        $umkmList = $query->get()->map(function($umkm) use ($userLat, $userLng) {
+            // Calculate distance if user location is available
+            $distance = null;
+            if ($userLat && $userLng && $umkm->latitude && $umkm->longitude) {
+                $distance = $this->calculateDistance($userLat, $userLng, $umkm->latitude, $umkm->longitude);
+            }
+            
+            // Calculate UMKM rating (from comments not tied to specific layanan)
+            $ratingUmkm = Comment::where('umkm_id', $umkm->id)
+                ->whereNull('layanan_id')
+                ->avg('rating') ?? 0;
+            
+            return [
+                'id' => $umkm->id,
+                'nama' => $umkm->nama,
+                'photo_path' => $umkm->photo_path ? asset('storage/' . $umkm->photo_path) : null,
+                'latitude' => $umkm->latitude,
+                'longitude' => $umkm->longitude,
+                'distance' => $distance ? round($distance, 2) : null,
+                'rating_umkm' => round($ratingUmkm, 1),
+                'url' => route('public.umkm.show', $umkm->id)
+            ];
+        })->toArray();
+        
+        Log::info('AI Chat - UMKM List', [
+            'count' => count($umkmList),
+            'has_user_location' => ($userLat && $userLng)
+        ]);
+        
+        return $umkmList;
+    }
+    
+    /**
+     * Calculate distance between two coordinates (Haversine formula)
+     */
+    private function calculateDistance($lat1, $lng1, $lat2, $lng2)
+    {
+        $earthRadius = 6371; // Earth's radius in kilometers
+        
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+        
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+             sin($dLng / 2) * sin($dLng / 2);
+        
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        $distance = $earthRadius * $c;
+        
+        return $distance;
     }
     
     /**
@@ -565,7 +769,7 @@ class UserAIChatController extends Controller
     /**
      * Format layanan data for response
      */
-    private function formatLayananData($layanan, $umkm)
+    private function formatLayananData($layanan, $umkm, $distance = null)
     {
         // Calculate ratings
         $ratingLayanan = Comment::where('layanan_id', $layanan->id)
@@ -585,9 +789,12 @@ class UserAIChatController extends Controller
             'umkm' => [
                 'id' => $umkm->id,
                 'nama' => $umkm->nama,
+                'latitude' => $umkm->latitude,
+                'longitude' => $umkm->longitude,
             ],
             'rating_layanan' => round($ratingLayanan, 1),
             'rating_umkm' => round($ratingUmkm, 1),
+            'distance' => $distance ? round($distance, 2) : null,
             'url' => route('public.layanan.show', $layanan->id)
         ];
     }

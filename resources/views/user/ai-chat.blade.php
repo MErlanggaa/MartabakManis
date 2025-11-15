@@ -179,6 +179,165 @@
         return messageDiv;
     }
 
+    // Display UMKM cards as a new AI message
+    function displayUmkmCards(umkmArray) {
+        if (!umkmArray || umkmArray.length === 0) return;
+        
+        // Create a new AI message container for the cards
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'flex items-start gap-3';
+        
+        const time = new Date().toLocaleTimeString('id-ID', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        
+        // Create cards container
+        const cardsContainer = document.createElement('div');
+        cardsContainer.className = 'space-y-3 w-full';
+        cardsContainer.id = 'umkm-cards-container';
+        
+        umkmArray.forEach(umkm => {
+            const card = createUmkmCard(umkm);
+            cardsContainer.appendChild(card);
+        });
+        
+        // Build the message HTML
+        const messageContent = document.createElement('div');
+        messageContent.className = 'flex-1';
+        
+        const messageBubble = document.createElement('div');
+        messageBubble.className = 'bg-white rounded-2xl rounded-tl-none px-4 py-3 shadow-sm';
+        
+        const titleText = document.createElement('p');
+        titleText.className = 'text-gray-800 mb-3 font-medium';
+        titleText.textContent = 'Berikut adalah UMKM yang sudah bergabung:';
+        messageBubble.appendChild(titleText);
+        messageBubble.appendChild(cardsContainer);
+        
+        messageContent.appendChild(messageBubble);
+        
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'text-xs text-gray-500 mt-1 block ml-2';
+        timeSpan.textContent = time;
+        messageContent.appendChild(timeSpan);
+        
+        const robotIcon = document.createElement('div');
+        robotIcon.className = 'w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0';
+        robotIcon.innerHTML = '<i class="fas fa-robot text-white text-sm"></i>';
+        
+        messageDiv.appendChild(robotIcon);
+        messageDiv.appendChild(messageContent);
+        
+        // Append as new message to chat box
+        chatBox.appendChild(messageDiv);
+        
+        // Scroll to bottom
+        chatBox.scrollTop = chatBox.scrollHeight;
+        
+        // Add data-no-loading to all links in cards
+        setTimeout(() => {
+            const links = messageDiv.querySelectorAll('a[href]');
+            links.forEach(link => {
+                link.setAttribute('data-no-loading', 'true');
+            });
+        }, 100);
+    }
+
+    // Create UMKM card
+    function createUmkmCard(umkm) {
+        const card = document.createElement('div');
+        card.className = 'bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer';
+        card.onclick = () => window.location.href = umkm.url;
+        
+        const imageUrl = umkm.photo_path || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"%3E%3Crect fill="%23e5e7eb" width="200" height="150"/%3E%3Ctext fill="%239ca3af" font-family="Arial" font-size="14" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
+        
+        card.innerHTML = `
+            <div class="flex gap-3 p-3">
+                <div class="w-20 h-20 md:w-24 md:h-24 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                    <img src="${imageUrl}" alt="${escapeHtml(umkm.nama)}" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\' viewBox=\\'0 0 100 100\\'%3E%3Crect fill=\\'%23e5e7eb\\' width=\\'100\\' height=\\'100\\'/%3E%3Ctext fill=\\'%239ca3af\\' font-family=\\'Arial\\' font-size=\\'12\\' x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3ENo Image%3C/text%3E%3C/svg%3E'">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h4 class="font-bold text-gray-900 text-sm md:text-base mb-1 line-clamp-1">${escapeHtml(umkm.nama)}</h4>
+                    <div class="flex items-center gap-3 mb-2">
+                        ${umkm.rating_umkm > 0 ? `
+                            <div class="flex items-center gap-1">
+                                <div class="flex items-center">
+                                    ${generateStars(umkm.rating_umkm)}
+                                </div>
+                                <span class="text-xs text-gray-600">${umkm.rating_umkm}</span>
+                            </div>
+                        ` : ''}
+                        ${umkm.distance !== null ? `
+                            <div class="flex items-center gap-1">
+                                <i class="fas fa-map-marker-alt text-[#218689] text-xs"></i>
+                                <span class="text-xs text-gray-600">${umkm.distance} km</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    ${umkm.latitude && umkm.longitude ? `
+                        <div class="flex items-center gap-1 mb-2">
+                            <i class="fas fa-location-dot text-gray-400 text-xs"></i>
+                            <span class="text-xs text-gray-500 line-clamp-1" data-lat="${umkm.latitude}" data-lng="${umkm.longitude}">Memuat lokasi...</span>
+                        </div>
+                    ` : ''}
+                    <a href="${umkm.url}" 
+                       data-no-loading="true"
+                       onclick="event.stopPropagation()"
+                       class="bg-[#009b97] hover:bg-[#007a77] text-white text-xs px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 inline-block">
+                        Lihat Layanan <i class="fas fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        // Load address if coordinates are available
+        if (umkm.latitude && umkm.longitude) {
+            const locationElement = card.querySelector('[data-lat]');
+            if (locationElement) {
+                fetchAddressFromCoordinates(umkm.latitude, umkm.longitude)
+                    .then(address => {
+                        if (address) {
+                            locationElement.textContent = address;
+                        } else {
+                            locationElement.textContent = 'Lokasi tidak tersedia';
+                        }
+                    })
+                    .catch(() => {
+                        if (locationElement) {
+                            locationElement.textContent = 'Lokasi tidak tersedia';
+                        }
+                    });
+            }
+        }
+        
+        return card;
+    }
+    
+    // Helper function to fetch address from coordinates
+    async function fetchAddressFromCoordinates(lat, lng) {
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=id`,
+                {
+                    headers: {
+                        'User-Agent': 'UMKM-App/1.0'
+                    }
+                }
+            );
+            
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            
+            const data = await response.json();
+            return data && data.display_name ? data.display_name : null;
+        } catch (error) {
+            console.error('Error fetching address:', error);
+            return null;
+        }
+    }
+
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
@@ -199,6 +358,42 @@
         // Show typing indicator
         const typingIndicator = appendMessage('ai', '', true);
         
+        // Get user location if available
+        let requestBody = { message: message };
+        
+        // Try to get user location from localStorage or geolocation
+        if (navigator.geolocation) {
+            const savedLocation = localStorage.getItem('userLocation');
+            if (savedLocation) {
+                try {
+                    const location = JSON.parse(savedLocation);
+                    if (location.lat && location.lng) {
+                        requestBody.user_lat = location.lat;
+                        requestBody.user_lng = location.lng;
+                    }
+                } catch (e) {
+                    console.error('Error parsing saved location:', e);
+                }
+            } else {
+                // Try to get current location
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        requestBody.user_lat = position.coords.latitude;
+                        requestBody.user_lng = position.coords.longitude;
+                        // Save to localStorage
+                        localStorage.setItem('userLocation', JSON.stringify({
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        }));
+                    },
+                    function(error) {
+                        console.log('Geolocation error:', error);
+                    },
+                    { timeout: 5000 }
+                );
+            }
+        }
+        
         // Send to API
         fetch('{{ route('user.ai.chat.send') }}', {
             method: 'POST',
@@ -206,7 +401,7 @@
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
-            body: JSON.stringify({ message: message })
+            body: JSON.stringify(requestBody)
         })
         .then(response => response.json())
         .then(data => {
@@ -253,6 +448,10 @@
                 setTimeout(() => {
                     if (data.layanan && data.layanan.length > 0) {
                         displayLayananCards(data.layanan);
+                    }
+                    // Display UMKM cards if available
+                    if (data.umkm && data.umkm.length > 0) {
+                        displayUmkmCards(data.umkm);
                     }
                 }, 300);
             } else {

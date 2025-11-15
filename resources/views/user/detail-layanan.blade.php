@@ -449,17 +449,73 @@
                             <p class="text-sm text-gray-600 mb-3 line-clamp-2 min-h-[2.5rem]">
                                 {{ $similarItem->description ?? 'Tidak ada deskripsi.' }}
                             </p>
-                            <div class="flex items-center justify-between">
+                            
+                            <!-- Rating -->
+                            @if(isset($similarItem->rating_layanan) && $similarItem->rating_layanan > 0)
+                                <div class="flex items-center gap-1 mb-2">
+                                    <div class="flex items-center">
+                                        @for($i = 1; $i <= 5; $i++)
+                                            @if($i <= floor($similarItem->rating_layanan))
+                                                <i class="fas fa-star text-yellow-400 text-xs"></i>
+                                            @elseif($i - 0.5 <= $similarItem->rating_layanan)
+                                                <i class="fas fa-star-half-alt text-yellow-400 text-xs"></i>
+                                            @else
+                                                <i class="far fa-star text-gray-300 text-xs"></i>
+                                            @endif
+                                        @endfor
+                                    </div>
+                                    <span class="text-xs text-gray-600">Menu: {{ number_format($similarItem->rating_layanan, 1) }}</span>
+                                </div>
+                            @endif
+                            
+                            @if($similarUmkm)
+                                @if(isset($similarItem->rating_umkm) && $similarItem->rating_umkm > 0)
+                                    <div class="flex items-center gap-1 mb-2">
+                                        <div class="flex items-center">
+                                            @for($i = 1; $i <= 5; $i++)
+                                                @if($i <= floor($similarItem->rating_umkm))
+                                                    <i class="fas fa-star text-yellow-400 text-xs"></i>
+                                                @elseif($i - 0.5 <= $similarItem->rating_umkm)
+                                                    <i class="fas fa-star-half-alt text-yellow-400 text-xs"></i>
+                                                @else
+                                                    <i class="far fa-star text-gray-300 text-xs"></i>
+                                                @endif
+                                            @endfor
+                                        </div>
+                                        <span class="text-xs text-gray-600">Toko: {{ number_format($similarItem->rating_umkm, 1) }}</span>
+                                    </div>
+                                @endif
+                                
+                                <!-- Location -->
+                                @if(isset($similarItem->umkm_latitude) && isset($similarItem->umkm_longitude))
+                                    <div class="flex items-center gap-1 mb-2">
+                                        <i class="fas fa-map-marker-alt text-[#218689] text-xs"></i>
+                                        <span class="text-xs text-gray-600 line-clamp-1" 
+                                              data-lat="{{ $similarItem->umkm_latitude }}" 
+                                              data-lng="{{ $similarItem->umkm_longitude }}">
+                                            Memuat lokasi...
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Distance -->
+                                    <div class="flex items-center gap-1 mb-2" id="distance-{{ $similarItem->id }}">
+                                        <i class="fas fa-route text-gray-400 text-xs"></i>
+                                        <span class="text-xs text-gray-500">Memuat jarak...</span>
+                                    </div>
+                                @endif
+                                
+                                <div class="flex items-center gap-1 mb-2">
+                                    <i class="fas fa-store text-[#218689] text-xs"></i>
+                                    <span class="text-xs text-gray-700 font-medium truncate">{{ $similarUmkm->nama }}</span>
+                                </div>
+                            @endif
+                            
+                            <div class="flex items-center justify-between mb-2">
                                 <span class="font-bold text-[#009b97] text-lg">
                                     Rp {{ number_format($similarItem->price, 0, ',', '.') }}
                                 </span>
-                                @if($similarUmkm)
-                                    <span class="text-xs text-gray-500 flex items-center">
-                                        <i class="fas fa-store mr-1"></i>
-                                        <span class="truncate max-w-[100px]">{{ $similarUmkm->nama }}</span>
-                                    </span>
-                                @endif
                             </div>
+                            
                             <button onclick="event.stopPropagation(); window.location.href='{{ route('public.layanan.show', $similarItem->id) }}'" 
                             class="w-full bg-[#32a752] hover:bg-[#218689] text-white text-center py-2 rounded-lg font-medium transition-colors text-sm">
                         Lihat Detail
@@ -682,6 +738,75 @@
         }
     }
     
+    // Calculate distance between two coordinates
+    function calculateDistance(lat1, lng1, lat2, lng2) {
+        const R = 6371; // Earth's radius in kilometers
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+    
+    // Load distance for similar layanan
+    function loadDistanceForSimilarLayanan() {
+        if (!navigator.geolocation) {
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+                
+                // Calculate distance for each similar layanan
+                document.querySelectorAll('[id^="distance-"]').forEach(element => {
+                    const layananId = element.id.replace('distance-', '');
+                    // Find the corresponding location element for this layanan
+                    const card = element.closest('.bg-white.rounded-xl');
+                    if (card) {
+                        const latElement = card.querySelector('[data-lat][data-lng]');
+                        
+                        if (latElement) {
+                            const lat = parseFloat(latElement.getAttribute('data-lat'));
+                            const lng = parseFloat(latElement.getAttribute('data-lng'));
+                            
+                            if (!isNaN(lat) && !isNaN(lng)) {
+                                const distance = calculateDistance(userLat, userLng, lat, lng);
+                                element.innerHTML = `
+                                    <i class="fas fa-route text-gray-400 text-xs"></i>
+                                    <span class="text-xs text-gray-500">${distance.toFixed(2)} km</span>
+                                `;
+                            } else {
+                                element.innerHTML = `
+                                    <i class="fas fa-route text-gray-400 text-xs"></i>
+                                    <span class="text-xs text-gray-500">Jarak tidak tersedia</span>
+                                `;
+                            }
+                        } else {
+                            element.innerHTML = `
+                                <i class="fas fa-route text-gray-400 text-xs"></i>
+                                <span class="text-xs text-gray-500">Jarak tidak tersedia</span>
+                            `;
+                        }
+                    }
+                });
+            },
+            function(error) {
+                console.log('Geolocation error:', error);
+                // Show error message
+                document.querySelectorAll('[id^="distance-"]').forEach(element => {
+                    element.innerHTML = `
+                        <i class="fas fa-route text-gray-400 text-xs"></i>
+                        <span class="text-xs text-gray-500">Aktifkan lokasi untuk melihat jarak</span>
+                    `;
+                });
+            }
+        );
+    }
+    
     // Load address for a specific element - always use full address format (same as detail-umkm)
     async function loadAddressForElement(element) {
         if (!element) {
@@ -762,7 +887,17 @@
         setTimeout(function() {
             console.log('Initializing address loader...');
             loadAddressFromCoordinates();
-        }, 300);
+            
+            // Load addresses for similar layanan
+            document.querySelectorAll('[data-lat][data-lng]').forEach(element => {
+                if (element.closest('.grid')) { // Only for similar layanan cards
+                    loadAddressForElement(element);
+                }
+            });
+            
+            // Load distances for similar layanan
+            loadDistanceForSimilarLayanan();
+        }, 500);
     }
     
     // Try multiple methods to ensure function runs
