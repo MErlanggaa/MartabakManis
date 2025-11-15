@@ -522,30 +522,30 @@
                 <div id="layanan-list" class="space-y-3">
                     @if($umkm && $umkm->layanan->count() > 0)
                         @foreach($umkm->layanan as $layanan)
-                            <div id="layanan-{{ $layanan->id }}" class="border border-gray-200 rounded-lg p-4">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                            <div id="layanan-{{ $layanan->id }}" class="border border-gray-200 rounded-lg p-3 md:p-4">
+                                <div class="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+                                    <div class="w-16 h-16 md:w-20 md:h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                                         @if($layanan->photo_path)
                                             <img src="{{ asset('storage/' . $layanan->photo_path) }}" alt="{{ $layanan->nama }}" class="w-full h-full object-cover">
                                         @else
                                             <div class="w-full h-full flex items-center justify-center text-gray-400">
-                                                <i class="fas fa-image"></i>
+                                                <i class="fas fa-image text-sm md:text-base"></i>
                                             </div>
                                         @endif
                                     </div>
-                                    <div class="flex-1">
-                                        <h5 class="font-semibold text-gray-900">{{ $layanan->nama }}</h5>
-                                        <p class="text-sm text-gray-600 mb-1">{{ $layanan->description ? Str::limit($layanan->description, 100, '...') : 'Tidak ada deskripsi' }}</p>
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                    <div class="flex-1 min-w-0">
+                                        <h5 class="font-semibold text-gray-900 text-sm md:text-base mb-1">{{ $layanan->nama }}</h5>
+                                        <p class="text-xs md:text-sm text-gray-600 mb-2 line-clamp-2">{{ $layanan->description ? Str::limit($layanan->description, 60, '...') : 'Tidak ada deskripsi' }}</p>
+                                        <span class="inline-flex items-center px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium bg-green-100 text-green-800">
                                             Rp {{ number_format($layanan->price, 0, ',', '.') }}
                                         </span>
                                     </div>
-                                    <div class="flex gap-2">
-                                        <button onclick="editLayanan({{ $layanan->id }})" class="text-blue-600 hover:text-blue-800" title="Edit">
-                                            <i class="fas fa-edit"></i>
+                                    <div class="flex gap-2 flex-shrink-0">
+                                        <button onclick="editLayanan({{ $layanan->id }})" class="text-blue-600 hover:text-blue-800 p-2 md:p-1" title="Edit">
+                                            <i class="fas fa-edit text-sm md:text-base"></i>
                                         </button>
-                                        <button onclick="removeLayanan({{ $layanan->id }})" class="text-red-600 hover:text-red-800" title="Hapus">
-                                            <i class="fas fa-trash"></i>
+                                        <button onclick="removeLayanan({{ $layanan->id }})" class="text-red-600 hover:text-red-800 p-2 md:p-1" title="Hapus">
+                                            <i class="fas fa-trash text-sm md:text-base"></i>
                                         </button>
                                     </div>
                                 </div>
