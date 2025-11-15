@@ -90,9 +90,15 @@ class AIConsultationController extends Controller
         $context .= "5. Gunakan bahasa Indonesia yang jelas dan ramah\n";
         $context .= "6. Jika pertanyaan tentang keuangan, gunakan data keuangan yang tersedia untuk analisis\n";
         $context .= "7. Berikan motivasi dan dukungan positif untuk pemilik UMKM\n";
-        $context .= "8. Jika perlu, ajukan pertanyaan klarifikasi untuk memberikan saran yang lebih tepat\n\n";
+        $context .= "8. PENTING: Jika pertanyaan user masih umum atau kurang spesifik, AJUKAN PERTANYAAN KLARIFIKASI untuk memahami kebutuhan mereka dengan lebih baik\n";
+        $context .= "9. Bersikaplah proaktif dan interaktif - jangan hanya memberikan jawaban generic, tapi tanyakan detail lebih lanjut jika diperlukan\n";
+        $context .= "10. Jika user mengatakan 'saya butuhkan beberapa hal' atau pertanyaan umum, tanyakan: 'Hal apa saja yang Anda butuhkan? Bisakah Anda jelaskan lebih detail?'\n\n";
         
-        $context .= "Jawablah dengan format yang rapi, gunakan poin-poin jika perlu, dan pastikan jawaban Anda membantu pemilik UMKM memahami dan menerapkan saran Anda.";
+        $context .= "CONTOH INTERAKSI YANG BAIK:\n";
+        $context .= "- Jika user bertanya umum: 'Saya butuh beberapa hal' → Anda harus bertanya: 'Baik, hal apa saja yang Anda butuhkan? Apakah terkait pemasaran, keuangan, operasional, atau aspek lain? Saya akan membantu Anda dengan lebih baik jika Anda bisa jelaskan lebih detail.'\n";
+        $context .= "- Jika user bertanya spesifik: Berikan jawaban lengkap dengan langkah-langkah, lalu tanyakan apakah ada yang perlu diklarifikasi\n\n";
+        
+        $context .= "Jawablah dengan format yang rapi, gunakan poin-poin jika perlu, dan pastikan jawaban Anda membantu pemilik UMKM memahami dan menerapkan saran Anda. JANGAN memberikan jawaban generic seperti 'fokus pada kualitas produk' tanpa konteks spesifik.";
         
         return $context;
     }
@@ -112,7 +118,8 @@ class AIConsultationController extends Controller
     private function tryGemini($context, $userMessage)
     {
         try {
-            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' . $this->geminiApiKey;
+            // Use gemini-1.5-flash for free tier (faster and free)
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . $this->geminiApiKey;
             
             $response = Http::timeout(60)->post($url, [
                 'contents' => [
@@ -125,7 +132,7 @@ class AIConsultationController extends Controller
                     ]
                 ],
                 'generationConfig' => [
-                    'temperature' => 0.7,
+                    'temperature' => 0.8, // Slightly higher for more creative and interactive responses
                     'topK' => 40,
                     'topP' => 0.95,
                     'maxOutputTokens' => 2048,
@@ -133,25 +140,34 @@ class AIConsultationController extends Controller
                 'safetySettings' => [
                     [
                         'category' => 'HARM_CATEGORY_HARASSMENT',
-                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                        'threshold' => 'BLOCK_ONLY_HIGH'
                     ],
                     [
                         'category' => 'HARM_CATEGORY_HATE_SPEECH',
-                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                        'threshold' => 'BLOCK_ONLY_HIGH'
                     ],
                     [
                         'category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                        'threshold' => 'BLOCK_ONLY_HIGH'
                     ],
                     [
                         'category' => 'HARM_CATEGORY_DANGEROUS_CONTENT',
-                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                        'threshold' => 'BLOCK_ONLY_HIGH'
                     ]
                 ]
             ]);
 
             if ($response->successful()) {
                 $data = $response->json();
+                
+                // Log for debugging
+                \Log::info('Gemini API Response', ['data' => $data]);
+                
+                // Check if response was blocked
+                if (isset($data['candidates'][0]['finishReason']) && $data['candidates'][0]['finishReason'] === 'SAFETY') {
+                    \Log::warning('Gemini API - Response blocked by safety settings');
+                    return ['success' => false, 'message' => 'Response blocked by safety settings'];
+                }
                 
                 // Extract response from Gemini API
                 if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
@@ -160,18 +176,37 @@ class AIConsultationController extends Controller
                     // Clean up the response
                     $message = trim($message);
                     
+                    // Remove "AI Konsultan:" prefix if present (we'll add it in the view)
+                    $message = preg_replace('/^AI\s*Konsultan\s*:\s*/i', '', $message);
+                    
                     return [
                         'success' => true,
                         'message' => $message
                     ];
                 } else {
-                    \Log::error('Gemini API - Unexpected response structure: ' . json_encode($data));
+                    \Log::error('Gemini API - Unexpected response structure', [
+                        'response' => $data,
+                        'keys' => isset($data['candidates'][0]) ? array_keys($data['candidates'][0]) : []
+                    ]);
                 }
             } else {
-                \Log::error('Gemini API Error: ' . $response->body());
+                $errorBody = $response->body();
+                \Log::error('Gemini API Error', [
+                    'status' => $response->status(),
+                    'body' => $errorBody
+                ]);
+                
+                // Try to extract error message
+                $errorData = json_decode($errorBody, true);
+                if (isset($errorData['error']['message'])) {
+                    \Log::error('Gemini API Error Message: ' . $errorData['error']['message']);
+                }
             }
         } catch (\Exception $e) {
-            \Log::error('Gemini API Exception: ' . $e->getMessage());
+            \Log::error('Gemini API Exception', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
 
         return ['success' => false];
