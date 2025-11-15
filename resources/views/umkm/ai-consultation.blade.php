@@ -123,7 +123,7 @@
             </div>
 
             <!-- Quick Questions -->
-            <div class="bg-white rounded-xl shadow-sm p-4">
+            {{-- <div class="bg-white rounded-xl shadow-sm p-4">
                 <h3 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <i class="fas fa-question-circle text-blue-500"></i> Pertanyaan Cepat
                 </h3>
@@ -149,7 +149,7 @@
                         <span class="text-sm">Mendapatkan Modal</span>
                     </button>
                 </div>
-            </div>
+            </div> --}}
         </div>
     </div>
 </div>
