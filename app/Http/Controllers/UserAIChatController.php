@@ -341,6 +341,7 @@ class UserAIChatController extends Controller
     /**
      * Validate AI response and find matching layanan in database
      * STRICT VALIDATION: Only return data that actually exists in database
+     * For recommendations: Sort by views and rating
      */
     private function validateAndFindLayanan($aiReply, $question)
     {
@@ -349,6 +350,15 @@ class UserAIChatController extends Controller
         
         if (!$isMenuRecommendation) {
             return [];
+        }
+
+        // Check if this is a general recommendation request (not specific menu/UMKM)
+        $isGeneralRecommendation = preg_match('/\b(rekomendasi|rekomendasikan)\b/i', $question) && 
+                                   !preg_match('/\b(dari|oleh|nama|umkm|toko)\b/i', $question);
+
+        // If general recommendation, get top layanan by views and rating
+        if ($isGeneralRecommendation) {
+            return $this->getRecommendedLayanan();
         }
 
         // Extract potential menu names from AI reply
@@ -410,21 +420,35 @@ class UserAIChatController extends Controller
                 $similarity = $this->calculateSimilarity(strtolower($cleanUmkmName), strtolower($umkm->nama));
                 
                 if ($similarity >= 0.6) {
-                    // Get all layanan from this UMKM
-                    $layanan = $umkm->layanan()->with(['comments'])->get();
+                    // Get all layanan from this UMKM, sorted by views and rating
+                    $layanan = $umkm->layanan()
+                        ->with(['comments'])
+                        ->get()
+                        ->map(function($item) use ($umkm) {
+                            return $this->formatLayananData($item, $umkm);
+                        })
+                        ->sortByDesc(function($item) {
+                            // Sort by rating first, then views
+                            $rating = $item['rating_layanan'] ?? 0;
+                            $views = $item['views'] ?? 0;
+                            return ($rating * 1000) + ($views / 100); // Rating weighted more
+                        })
+                        ->values();
                     
                     foreach ($layanan as $item) {
-                        if (in_array($item->id, $foundIds)) continue;
+                        if (in_array($item['id'], $foundIds)) continue;
                         
-                        $foundIds[] = $item->id;
-                        $foundLayanan[] = $this->formatLayananData($item, $umkm);
+                        $foundIds[] = $item['id'];
+                        $foundLayanan[] = $item;
                     }
                 }
             }
         }
 
-        // REMOVED: Fallback search by keywords - too loose, might show wrong data
-        // Only show data that was explicitly mentioned and found in database
+        // If no specific match found but it's a recommendation request, get top recommendations
+        if (empty($foundLayanan) && $isMenuRecommendation) {
+            return $this->getRecommendedLayanan();
+        }
         
         // Log what was found for debugging
         if (!empty($foundLayanan)) {
@@ -444,6 +468,64 @@ class UserAIChatController extends Controller
 
         // Limit to 5 results
         return array_slice($foundLayanan, 0, 5);
+    }
+    
+    /**
+     * Get recommended layanan based on views and rating
+     */
+    private function getRecommendedLayanan()
+    {
+        // Get all layanan with their UMKM
+        $allLayanan = Layanan::with(['umkm.user', 'comments'])
+            ->whereHas('umkm') // Only get layanan that have UMKM
+            ->get();
+        
+        // Calculate score for each layanan (rating + views)
+        $layananWithScore = $allLayanan->map(function($item) {
+            $umkm = $item->umkm->first();
+            if (!$umkm) {
+                return null;
+            }
+            
+            // Calculate rating
+            $ratingLayanan = Comment::where('layanan_id', $item->id)
+                ->avg('rating') ?? 0;
+            
+            // Get views
+            $views = $item->views ?? 0;
+            
+            // Calculate score: Rating weighted 70%, Views weighted 30%
+            // Normalize views (assume max views is 10000, if more, cap at 10000)
+            $normalizedViews = min($views, 10000) / 10000;
+            $score = ($ratingLayanan * 0.7) + ($normalizedViews * 0.3);
+            
+            return [
+                'data' => $this->formatLayananData($item, $umkm),
+                'rating' => round($ratingLayanan, 1),
+                'views' => $views,
+                'score' => $score
+            ];
+        })
+        ->filter() // Remove null values
+        ->sortByDesc('score') // Sort by score (rating + views)
+        ->take(5) // Get top 5
+        ->map(function($item) {
+            return $item['data']; // Return only the formatted data
+        })
+        ->values()
+        ->toArray();
+        
+        Log::info('AI Chat - Recommended Layanan', [
+            'count' => count($layananWithScore),
+            'layanan_names' => array_column($layananWithScore, 'nama'),
+            'scores' => $allLayanan->map(function($item) {
+                $rating = Comment::where('layanan_id', $item->id)->avg('rating') ?? 0;
+                $views = $item->views ?? 0;
+                return ['nama' => $item->nama, 'rating' => $rating, 'views' => $views];
+            })->take(5)->toArray()
+        ]);
+        
+        return $layananWithScore;
     }
     
     /**
@@ -499,6 +581,7 @@ class UserAIChatController extends Controller
             'description' => Str::limit($layanan->description ?? '', 100),
             'price' => $layanan->price,
             'photo_path' => $layanan->photo_path ? asset('storage/' . $layanan->photo_path) : null,
+            'views' => $layanan->views ?? 0,
             'umkm' => [
                 'id' => $umkm->id,
                 'nama' => $umkm->nama,

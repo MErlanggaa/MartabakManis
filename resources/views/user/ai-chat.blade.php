@@ -248,10 +248,13 @@
                     appendMessage('ai', replyText);
                 }
                 
-                // Display layanan cards if available
-                if (data.layanan && data.layanan.length > 0) {
-                    displayLayananCards(data.layanan);
-                }
+                // Display layanan cards if available - as a separate new message
+                // Wait a bit to ensure the previous message is fully rendered
+                setTimeout(() => {
+                    if (data.layanan && data.layanan.length > 0) {
+                        displayLayananCards(data.layanan);
+                    }
+                }, 300);
             } else {
                 appendMessage('ai', data.message || 'Maaf, terjadi kesalahan. Silakan coba lagi.');
             }
@@ -323,10 +326,22 @@
         }
     });
 
-    // Display layanan cards
+    // Display layanan cards as a new AI message
     function displayLayananCards(layananArray) {
+        if (!layananArray || layananArray.length === 0) return;
+        
+        // Create a new AI message container for the cards
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'flex items-start gap-3';
+        
+        const time = new Date().toLocaleTimeString('id-ID', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        
+        // Create cards container
         const cardsContainer = document.createElement('div');
-        cardsContainer.className = 'mt-4 space-y-3';
+        cardsContainer.className = 'space-y-3 w-full';
         cardsContainer.id = 'layanan-cards-container';
         
         layananArray.forEach(layanan => {
@@ -334,16 +349,46 @@
             cardsContainer.appendChild(card);
         });
         
-        // Append to last AI message
-        const lastMessage = chatBox.querySelector('.flex.items-start.gap-3:not(.flex-row-reverse)');
-        if (lastMessage) {
-            const messageContent = lastMessage.querySelector('.flex-1');
-            if (messageContent) {
-                messageContent.appendChild(cardsContainer);
-            }
-        }
+        // Build the message HTML - cards will be inserted after this
+        const messageContent = document.createElement('div');
+        messageContent.className = 'flex-1';
         
+        const messageBubble = document.createElement('div');
+        messageBubble.className = 'bg-white rounded-2xl rounded-tl-none px-4 py-3 shadow-sm';
+        
+        const titleText = document.createElement('p');
+        titleText.className = 'text-gray-800 mb-3 font-medium';
+        titleText.textContent = 'Berikut adalah rekomendasi menu yang tersedia:';
+        messageBubble.appendChild(titleText);
+        messageBubble.appendChild(cardsContainer);
+        
+        messageContent.appendChild(messageBubble);
+        
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'text-xs text-gray-500 mt-1 block ml-2';
+        timeSpan.textContent = time;
+        messageContent.appendChild(timeSpan);
+        
+        const robotIcon = document.createElement('div');
+        robotIcon.className = 'w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0';
+        robotIcon.innerHTML = '<i class="fas fa-robot text-white text-sm"></i>';
+        
+        messageDiv.appendChild(robotIcon);
+        messageDiv.appendChild(messageContent);
+        
+        // Append as new message to chat box
+        chatBox.appendChild(messageDiv);
+        
+        // Scroll to bottom
         chatBox.scrollTop = chatBox.scrollHeight;
+        
+        // Add data-no-loading to all links in cards
+        setTimeout(() => {
+            const links = messageDiv.querySelectorAll('a[href]');
+            links.forEach(link => {
+                link.setAttribute('data-no-loading', 'true');
+            });
+        }, 100);
     }
 
     // Create layanan card
