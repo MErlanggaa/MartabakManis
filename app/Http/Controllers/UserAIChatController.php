@@ -172,9 +172,25 @@ class UserAIChatController extends Controller
             if ($isUmkmList) {
                 // Get UMKM list from database
                 $foundUmkm = $this->getUmkmList($request);
+                
+                // If we have UMKM data, override AI reply with a better response
+                if (!empty($foundUmkm)) {
+                    $reply = "Berikut adalah UMKM yang sudah bergabung di platform kami:";
+                } else {
+                    $reply = "Maaf, saat ini belum ada UMKM yang terdaftar di platform kami.";
+                }
             } else {
                 // Get layanan recommendations
                 $foundLayanan = $this->validateAndFindLayanan($reply, $question, $request);
+                
+                // If we have layanan data but AI said it can't find, override the reply
+                if (!empty($foundLayanan) && (
+                    stripos($reply, 'tidak dapat menemukan') !== false ||
+                    stripos($reply, 'tidak menemukan') !== false ||
+                    stripos($reply, 'maaf') !== false && stripos($reply, 'tidak') !== false
+                )) {
+                    $reply = "Berikut adalah rekomendasi menu yang tersedia:";
+                }
             }
             
             // Log for debugging
