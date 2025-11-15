@@ -229,6 +229,7 @@
                 </div>
                 
                 @auth
+                @if(Auth::user()->role === 'user')
                 <div class="flex items-end">
                     <a href="{{ route('user.ai.chat') }}" 
                        class="w-full bg-[#218689] hover:bg-[#007a77] text-white px-6 py-3 rounded-xl transition-all duration-300 inline-flex items-center justify-center gap-2 font-semibold shadow-md hover:shadow-lg">
@@ -236,6 +237,7 @@
                         <span class="text-base md:text-lg">Rekomendasi dari AI</span>
                     </a>
                 </div>
+                @endif
                 @endauth
             </div>
         </form>
