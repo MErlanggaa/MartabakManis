@@ -109,31 +109,89 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex flex-col sm:flex-row gap-4 mt-6">
-                    @if($umkm && $umkm->no_wa)
-                        @php
-                            $no_wa_clean = preg_replace('/[^0-9]/', '', $umkm->no_wa);
-                            $message = urlencode("Halo, saya tertarik dengan layanan {$layanan->nama} Anda di UMKM {$umkm->nama}.");
-                        @endphp
-                        <a href="https://wa.me/{{ $no_wa_clean }}?text={{ $message }}" 
-                           target="_blank" 
-                           class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-300 flex items-center justify-center gap-3 shadow-md hover:shadow-lg">
-                            <i class="fab fa-whatsapp text-2xl"></i>
-                            <span>Hubungi Penjual</span>
-                        </a>
-                    @else
-                        <button disabled class="flex-1 bg-gray-300 text-gray-500 font-bold py-4 px-6 rounded-lg cursor-not-allowed flex items-center justify-center gap-3" title="Nomor WhatsApp tidak tersedia">
-                            <i class="fab fa-whatsapp text-2xl"></i>
-                            <span>Hubungi Penjual</span>
+                <div class="mt-6 space-y-4">
+                    <!-- Primary Actions -->
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        @if($umkm && $umkm->no_wa)
+                            @php
+                                $no_wa_clean = preg_replace('/[^0-9]/', '', $umkm->no_wa);
+                                $message = urlencode("Halo, saya tertarik dengan layanan {$layanan->nama} Anda di UMKM {$umkm->nama}.");
+                            @endphp
+                            <a href="https://wa.me/{{ $no_wa_clean }}?text={{ $message }}" 
+                               target="_blank" 
+                               data-no-loading="true"
+                               class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-300 flex items-center justify-center gap-3 shadow-md hover:shadow-lg">
+                                <i class="fab fa-whatsapp text-2xl"></i>
+                                <span>Hubungi Penjual</span>
+                            </a>
+                        @else
+                            <button disabled class="flex-1 bg-gray-300 text-gray-500 font-bold py-4 px-6 rounded-lg cursor-not-allowed flex items-center justify-center gap-3" title="Nomor WhatsApp tidak tersedia">
+                                <i class="fab fa-whatsapp text-2xl"></i>
+                                <span>Hubungi Penjual</span>
+                            </button>
+                        @endif
+                        
+                        <button type="button" 
+                                onclick="shareProduct()"
+                                class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-4 px-6 rounded-lg transition-colors duration-300 flex items-center justify-center gap-3 shadow-md hover:shadow-lg">
+                            <i class="fas fa-share-alt text-xl"></i>
+                            <span>Bagikan</span>
                         </button>
-                    @endif
+                    </div>
                     
-                    <button type="button" 
-                            onclick="shareProduct()"
-                            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-4 px-6 rounded-lg transition-colors duration-300 flex items-center justify-center gap-3 shadow-md hover:shadow-lg">
-                        <i class="fas fa-share-alt text-xl"></i>
-                        <span>Bagikan</span>
-                    </button>
+                    <!-- Social Media & E-commerce Buttons -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <!-- Instagram Button -->
+                        @if($umkm && $umkm->instagram_url)
+                            <a href="{{ $umkm->instagram_url }}" 
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               data-no-loading="true"
+                               class="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105">
+                                <i class="fab fa-instagram text-xl"></i>
+                                <span class="text-sm">Instagram</span>
+                            </a>
+                        @else
+                            <button disabled class="bg-gray-300 text-gray-500 font-bold py-3 px-4 rounded-lg cursor-not-allowed flex items-center justify-center gap-2" title="Instagram tidak tersedia">
+                                <i class="fab fa-instagram text-xl"></i>
+                                <span class="text-sm">Instagram</span>
+                            </button>
+                        @endif
+                        
+                        <!-- Shopee Button -->
+                        @if($umkm && $umkm->shopee_url)
+                            <a href="{{ $umkm->shopee_url }}" 
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               data-no-loading="true"
+                               class="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105">
+                                <i class="fas fa-shopping-bag text-xl"></i>
+                                <span class="text-sm">Shopee</span>
+                            </a>
+                        @else
+                            <button disabled class="bg-gray-300 text-gray-500 font-bold py-3 px-4 rounded-lg cursor-not-allowed flex items-center justify-center gap-2" title="Shopee tidak tersedia">
+                                <i class="fas fa-shopping-bag text-xl"></i>
+                                <span class="text-sm">Shopee</span>
+                            </button>
+                        @endif
+                        
+                        <!-- Tokopedia Button -->
+                        @if($umkm && $umkm->tokopedia_url)
+                            <a href="{{ $umkm->tokopedia_url }}" 
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               data-no-loading="true"
+                               class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105">
+                                <i class="fas fa-store text-xl"></i>
+                                <span class="text-sm">Tokopedia</span>
+                            </a>
+                        @else
+                            <button disabled class="bg-gray-300 text-gray-500 font-bold py-3 px-4 rounded-lg cursor-not-allowed flex items-center justify-center gap-2" title="Tokopedia tidak tersedia">
+                                <i class="fas fa-store text-xl"></i>
+                                <span class="text-sm">Tokopedia</span>
+                            </button>
+                        @endif
+                    </div>
                 </div>
 
                 <!-- Seller Info -->

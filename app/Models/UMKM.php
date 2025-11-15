@@ -19,6 +19,9 @@ class UMKM extends Model
         'favorit_count',
         'jenis_umkm',
         'no_wa',
+        'instagram_url',
+        'shopee_url',
+        'tokopedia_url',
         'views',
     ];
 

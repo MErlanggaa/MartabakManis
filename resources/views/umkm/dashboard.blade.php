@@ -328,6 +328,33 @@
                     <p class="mt-1 text-xs text-gray-500">Format: nomor telepon (dapat menggunakan +62 atau 0)</p>
                 </div>
                 <div>
+                    <label for="instagram_url" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fab fa-instagram text-pink-500"></i> Instagram URL
+                    </label>
+                    <input type="url" id="instagram_url" name="instagram_url" value="{{ $umkm->instagram_url ?? '' }}" 
+                           placeholder="https://instagram.com/username"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <p class="mt-1 text-xs text-gray-500">Link profil Instagram (opsional)</p>
+                </div>
+                <div>
+                    <label for="shopee_url" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-shopping-bag text-orange-500"></i> Shopee URL
+                    </label>
+                    <input type="url" id="shopee_url" name="shopee_url" value="{{ $umkm->shopee_url ?? '' }}" 
+                           placeholder="https://shopee.co.id/username"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <p class="mt-1 text-xs text-gray-500">Link toko Shopee (opsional)</p>
+                </div>
+                <div>
+                    <label for="tokopedia_url" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-store text-green-500"></i> Tokopedia URL
+                    </label>
+                    <input type="url" id="tokopedia_url" name="tokopedia_url" value="{{ $umkm->tokopedia_url ?? '' }}" 
+                           placeholder="https://tokopedia.com/username"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <p class="mt-1 text-xs text-gray-500">Link toko Tokopedia (opsional)</p>
+                </div>
+                <div>
                     <label for="photo" class="block text-sm font-medium text-gray-700 mb-2">Foto UMKM</label>
                     <input type="file" id="photo" name="photo" accept="image/*"
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">

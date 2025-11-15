@@ -35,6 +35,9 @@ class AdminController extends Controller
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'no_wa' => 'nullable|string|max:20',
+            'instagram_url' => 'nullable|url|max:255',
+            'shopee_url' => 'nullable|url|max:255',
+            'tokopedia_url' => 'nullable|url|max:255',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -61,6 +64,9 @@ class AdminController extends Controller
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
             'no_wa' => $request->no_wa,
+            'instagram_url' => $request->instagram_url,
+            'shopee_url' => $request->shopee_url,
+            'tokopedia_url' => $request->tokopedia_url,
             'photo_path' => $photoPath,
         ]);
 
@@ -86,6 +92,9 @@ class AdminController extends Controller
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'no_wa' => 'nullable|string|max:20',
+            'instagram_url' => 'nullable|url|max:255',
+            'shopee_url' => 'nullable|url|max:255',
+            'tokopedia_url' => 'nullable|url|max:255',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -114,6 +123,9 @@ class AdminController extends Controller
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
             'no_wa' => $request->no_wa,
+            'instagram_url' => $request->instagram_url,
+            'shopee_url' => $request->shopee_url,
+            'tokopedia_url' => $request->tokopedia_url,
             'photo_path' => $photoPath,
         ]);
 

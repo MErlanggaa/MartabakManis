@@ -173,6 +173,64 @@
                 </div>
             </div>
 
+            <!-- Social Media & E-commerce -->
+            @if($umkm->instagram_url || $umkm->shopee_url || $umkm->tokopedia_url)
+            <div class="bg-white rounded-xl shadow-sm p-4 md:p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <i class="fas fa-share-alt text-blue-600"></i> Media Sosial & Toko Online
+                </h2>
+                <div class="space-y-3">
+                    @if($umkm->instagram_url)
+                        <a href="{{ $umkm->instagram_url }}" 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           class="flex items-center gap-3 p-3 bg-gradient-to-r from-pink-50 to-purple-50 hover:from-pink-100 hover:to-purple-100 rounded-lg transition-all border border-pink-200 hover:border-pink-300 group">
+                            <div class="w-10 h-10 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                                <i class="fab fa-instagram text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-900">Instagram</p>
+                                <p class="text-xs text-gray-600 truncate">{{ $umkm->instagram_url }}</p>
+                            </div>
+                            <i class="fas fa-external-link-alt text-gray-400 group-hover:text-pink-600 transition-colors"></i>
+                        </a>
+                    @endif
+                    
+                    @if($umkm->shopee_url)
+                        <a href="{{ $umkm->shopee_url }}" 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           class="flex items-center gap-3 p-3 bg-gradient-to-r from-orange-50 to-red-50 hover:from-orange-100 hover:to-red-100 rounded-lg transition-all border border-orange-200 hover:border-orange-300 group">
+                            <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                                <i class="fas fa-shopping-bag text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-900">Shopee</p>
+                                <p class="text-xs text-gray-600 truncate">{{ $umkm->shopee_url }}</p>
+                            </div>
+                            <i class="fas fa-external-link-alt text-gray-400 group-hover:text-orange-600 transition-colors"></i>
+                        </a>
+                    @endif
+                    
+                    @if($umkm->tokopedia_url)
+                        <a href="{{ $umkm->tokopedia_url }}" 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           class="flex items-center gap-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 rounded-lg transition-all border border-green-200 hover:border-green-300 group">
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                                <i class="fas fa-store text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-900">Tokopedia</p>
+                                <p class="text-xs text-gray-600 truncate">{{ $umkm->tokopedia_url }}</p>
+                            </div>
+                            <i class="fas fa-external-link-alt text-gray-400 group-hover:text-green-600 transition-colors"></i>
+                        </a>
+                    @endif
+                </div>
+            </div>
+            @endif
+
             <!-- Alamat Lengkap -->
             <div class="bg-white rounded-xl shadow-sm p-4 md:p-6">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
