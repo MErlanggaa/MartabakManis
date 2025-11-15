@@ -208,7 +208,20 @@
                                 @endif
                             </div>
                             <div class="flex-1">
-                                <h3 class="font-bold text-lg text-gray-900 mb-2">{{ $umkm->nama }}</h3>
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="font-bold text-lg text-gray-900">{{ $umkm->nama }}</h3>
+                                    @if(isset($averageRatingUmkm) && $averageRatingUmkm > 0)
+                                        <div class="flex items-center gap-2">
+                                            <div class="flex items-center">
+                                                @for($i = 1; $i <= 5; $i++)
+                                                    <i class="fas fa-star text-sm {{ $i <= round($averageRatingUmkm) ? 'text-yellow-400' : 'text-gray-300' }}"></i>
+                                                @endfor
+                                            </div>
+                                            <span class="text-sm text-gray-600 font-medium">{{ number_format($averageRatingUmkm, 1) }}</span>
+                                            <span class="text-xs text-gray-500">(Toko)</span>
+                                        </div>
+                                    @endif
+                                </div>
                                 @if($umkm && !is_null($umkm->latitude) && !is_null($umkm->longitude) && $umkm->latitude != 0 && $umkm->longitude != 0)
                                     <div class="mb-2">
                                         <p class="text-xs text-gray-500 mb-1 flex items-center">

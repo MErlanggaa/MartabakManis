@@ -137,6 +137,14 @@ class UserController extends Controller
             $item->umkm_longitude = $umkm->longitude;
             $item->umkm_id = $umkm->id;
             
+            // Calculate rating for layanan
+            $item->rating_layanan = Comment::where('layanan_id', $item->id)->avg('rating') ?? 0;
+            
+            // Calculate rating for UMKM (komentar untuk UMKM, bukan layanan)
+            $item->rating_umkm = Comment::where('umkm_id', $umkm->id)
+                ->whereNull('layanan_id')
+                ->avg('rating') ?? 0;
+            
             return $item;
         });
 
@@ -671,6 +679,11 @@ class UserController extends Controller
         $averageRatingLayanan = Comment::where('layanan_id', $layanan->id)->avg('rating') ?? 0;
         $totalCommentsLayanan = Comment::where('layanan_id', $layanan->id)->count();
         
+        // Calculate average rating for UMKM (komentar untuk UMKM, bukan layanan)
+        $averageRatingUmkm = Comment::where('umkm_id', $umkm->id)
+            ->whereNull('layanan_id')
+            ->avg('rating') ?? 0;
+        
         // Get user's comment if authenticated
         $userCommentLayanan = null;
         if (Auth::check()) {
@@ -682,7 +695,7 @@ class UserController extends Controller
         // Address will be loaded via JavaScript from coordinates
         // No need to fetch from API on server-side
         
-        return view('user.detail-layanan', compact('layanan', 'umkm', 'similarLayanan', 'commentsLayanan', 'averageRatingLayanan', 'totalCommentsLayanan', 'userCommentLayanan'));
+        return view('user.detail-layanan', compact('layanan', 'umkm', 'similarLayanan', 'commentsLayanan', 'averageRatingLayanan', 'totalCommentsLayanan', 'userCommentLayanan', 'averageRatingUmkm'));
     }
 
     public function toggleFavorite($id)

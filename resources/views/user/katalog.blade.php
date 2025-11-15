@@ -413,6 +413,18 @@
                             {{ Str::limit($item->nama,  20, '...') }}
                     </h3>
                     
+                    <!-- Rating Layanan -->
+                    @if(isset($item->rating_layanan) && $item->rating_layanan > 0)
+                        <div class="flex items-center gap-1 mb-1">
+                            <div class="flex items-center">
+                                @for($i = 1; $i <= 5; $i++)
+                                    <i class="fas fa-star text-[10px] md:text-xs {{ $i <= round($item->rating_layanan) ? 'text-yellow-400' : 'text-gray-300' }}"></i>
+                                @endfor
+                            </div>
+                            <span class="text-[10px] md:text-xs text-gray-600 font-medium">{{ number_format($item->rating_layanan, 1) }}</span>
+                        </div>
+                    @endif
+                    
                     <!-- Description - Shown on all devices with truncate -->
                     @if($item->description)
                         <p class="text-gray-600 text-xs md:text-sm mb-2 md:mb-4 line-clamp-2 leading-relaxed">
@@ -439,6 +451,18 @@
                                 </div>
                                 <span class="font-semibold text-gray-800 truncate text-xs md:text-sm">{{ $umkm->nama }}</span>
                         </div>
+                        
+                            <!-- Rating Toko - Above Location -->
+                            @if(isset($item->rating_umkm) && $item->rating_umkm > 0)
+                                <div class="flex items-center gap-1.5 text-[10px] md:text-xs">
+                                    <div class="flex items-center">
+                                        @for($i = 1; $i <= 5; $i++)
+                                            <i class="fas fa-star {{ $i <= round($item->rating_umkm) ? 'text-yellow-400' : 'text-gray-300' }}"></i>
+                                        @endfor
+                                    </div>
+                                    <span class="text-gray-600 font-medium">Toko: {{ number_format($item->rating_umkm, 1) }}</span>
+                                </div>
+                            @endif
                         
                             <!-- Location dengan Jarak - Simplified on mobile -->
                             <div class="space-y-1 md:space-y-2">

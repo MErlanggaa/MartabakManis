@@ -247,6 +247,11 @@
                 } else {
                     appendMessage('ai', replyText);
                 }
+                
+                // Display layanan cards if available
+                if (data.layanan && data.layanan.length > 0) {
+                    displayLayananCards(data.layanan);
+                }
             } else {
                 appendMessage('ai', data.message || 'Maaf, terjadi kesalahan. Silakan coba lagi.');
             }
@@ -317,6 +322,110 @@
             chatForm.dispatchEvent(new Event('submit'));
         }
     });
+
+    // Display layanan cards
+    function displayLayananCards(layananArray) {
+        const cardsContainer = document.createElement('div');
+        cardsContainer.className = 'mt-4 space-y-3';
+        cardsContainer.id = 'layanan-cards-container';
+        
+        layananArray.forEach(layanan => {
+            const card = createLayananCard(layanan);
+            cardsContainer.appendChild(card);
+        });
+        
+        // Append to last AI message
+        const lastMessage = chatBox.querySelector('.flex.items-start.gap-3:not(.flex-row-reverse)');
+        if (lastMessage) {
+            const messageContent = lastMessage.querySelector('.flex-1');
+            if (messageContent) {
+                messageContent.appendChild(cardsContainer);
+            }
+        }
+        
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Create layanan card
+    function createLayananCard(layanan) {
+        const card = document.createElement('div');
+        card.className = 'bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer';
+        card.onclick = () => window.location.href = layanan.url;
+        
+        const imageUrl = layanan.photo_path || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"%3E%3Crect fill="%23e5e7eb" width="200" height="150"/%3E%3Ctext fill="%239ca3af" font-family="Arial" font-size="14" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
+        
+        card.innerHTML = `
+            <div class="flex gap-3 p-3">
+                <div class="w-20 h-20 md:w-24 md:h-24 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                    <img src="${imageUrl}" alt="${escapeHtml(layanan.nama)}" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\' viewBox=\\'0 0 100 100\\'%3E%3Crect fill=\\'%23e5e7eb\\' width=\\'100\\' height=\\'100\\'/%3E%3Ctext fill=\\'%239ca3af\\' font-family=\\'Arial\\' font-size=\\'12\\' x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3ENo Image%3C/text%3E%3C/svg%3E'">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h4 class="font-bold text-gray-900 text-sm md:text-base mb-1 line-clamp-1">${escapeHtml(layanan.nama)}</h4>
+                    <p class="text-xs text-gray-600 mb-2 line-clamp-2">${escapeHtml(layanan.description || 'Tidak ada deskripsi')}</p>
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="flex items-center gap-1">
+                            <i class="fas fa-store text-[#218689] text-xs"></i>
+                            <span class="text-xs text-gray-700 font-medium truncate">${escapeHtml(layanan.umkm.nama)}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 mb-2">
+                        ${layanan.rating_layanan > 0 ? `
+                            <div class="flex items-center gap-1">
+                                <div class="flex items-center">
+                                    ${generateStars(layanan.rating_layanan)}
+                                </div>
+                                <span class="text-xs text-gray-600">Menu: ${layanan.rating_layanan}</span>
+                            </div>
+                        ` : ''}
+                        ${layanan.rating_umkm > 0 ? `
+                            <div class="flex items-center gap-1">
+                                <div class="flex items-center">
+                                    ${generateStars(layanan.rating_umkm)}
+                                </div>
+                                <span class="text-xs text-gray-600">Toko: ${layanan.rating_umkm}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-bold text-[#009b97]">Rp ${formatNumber(layanan.price)}</span>
+                        <a href="${layanan.url}" 
+                           data-no-loading="true"
+                           onclick="event.stopPropagation()"
+                           class="bg-[#009b97] hover:bg-[#007a77] text-white text-xs px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                            <span>Lihat Layanan</span>
+                            <i class="fas fa-arrow-right text-xs"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        return card;
+    }
+
+    // Generate star rating HTML
+    function generateStars(rating) {
+        let starsHtml = '';
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        
+        for (let i = 1; i <= 5; i++) {
+            if (i <= fullStars) {
+                starsHtml += '<i class="fas fa-star text-yellow-400 text-xs"></i>';
+            } else if (i === fullStars + 1 && hasHalfStar) {
+                starsHtml += '<i class="fas fa-star-half-alt text-yellow-400 text-xs"></i>';
+            } else {
+                starsHtml += '<i class="far fa-star text-gray-300 text-xs"></i>';
+            }
+        }
+        
+        return starsHtml;
+    }
+
+    // Format number with thousand separator
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
 </script>
 @endsection
 
