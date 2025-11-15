@@ -36,12 +36,19 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/laporan/{id}/detail', [AdminController::class, 'getLaporan'])->name('laporan.show');
     Route::put('/laporan/{id}/status', [AdminController::class, 'updateStatusLaporan'])->name('laporan.update.status');
     Route::delete('/laporan/{id}', [AdminController::class, 'deleteLaporan'])->name('laporan.delete');
+    
+    // User management routes
+    Route::get('/users', [AdminController::class, 'users'])->name('users');
+    Route::get('/users/{id}/edit', [AdminController::class, 'editUser'])->name('users.edit');
+    Route::put('/users/{id}/update', [AdminController::class, 'updateUser'])->name('users.update');
 });
 
 // UMKM routes
 Route::middleware(['auth', 'role:umkm'])->prefix('umkm')->name('umkm.')->group(function () {
     Route::get('/dashboard', [UMKMController::class, 'dashboard'])->name('dashboard');
     Route::post('/profile/update', [UMKMController::class, 'updateProfile'])->name('profile.update');
+    Route::get('/account/edit', [UMKMController::class, 'editAccount'])->name('edit.account');
+    Route::put('/account/update', [UMKMController::class, 'updateAccount'])->name('update.account');
     Route::post('/keuntungan/store', [UMKMController::class, 'storeKeuntungan'])->name('keuntungan.store');
     Route::delete('/keuntungan/{id}/delete', [UMKMController::class, 'deleteKeuntungan'])->name('keuntungan.delete');
     Route::post('/excel/upload', [UMKMController::class, 'uploadExcel'])->name('excel.upload');
@@ -81,6 +88,10 @@ Route::middleware(['auth', 'role:user'])->prefix('user')->name('user.')->group(f
     
     // History Laporan
     Route::get('/history-laporan', [UserController::class, 'historyLaporan'])->name('history.laporan');
+    
+    // Profile management
+    Route::get('/profile/edit', [UserController::class, 'editProfile'])->name('edit.profile');
+    Route::put('/profile/update', [UserController::class, 'updateProfile'])->name('update.profile');
 });
 
 // Public UMKM catalog (for non-authenticated users)

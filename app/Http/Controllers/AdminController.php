@@ -278,4 +278,57 @@ class AdminController extends Controller
 
         return redirect()->route('admin.laporan')->with('success', 'Laporan berhasil dihapus!');
     }
+
+    /**
+     * Show all users
+     */
+    public function users()
+    {
+        $users = User::with('umkm')->orderBy('created_at', 'desc')->paginate(15);
+        
+        // Statistics
+        $totalUsers = User::count();
+        $totalUserRole = User::where('role', 'user')->count();
+        $totalUmkmRole = User::where('role', 'umkm')->count();
+        $totalAdminRole = User::where('role', 'admin')->count();
+        
+        return view('admin.users', compact('users', 'totalUsers', 'totalUserRole', 'totalUmkmRole', 'totalAdminRole'));
+    }
+
+    /**
+     * Show edit user form
+     */
+    public function editUser($id)
+    {
+        $user = User::with('umkm')->findOrFail($id);
+        return view('admin.edit-user', compact('user'));
+    }
+
+    /**
+     * Update user (admin can edit any user)
+     */
+    public function updateUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'password' => 'nullable|string|min:8|confirmed',
+            'role' => 'required|in:user,umkm,admin',
+        ]);
+
+        $updateData = [
+            'name' => $request->name,
+            'role' => $request->role,
+        ];
+
+        // Only update password if provided
+        if ($request->filled('password')) {
+            $updateData['password'] = Hash::make($request->password);
+        }
+
+        $user->update($updateData);
+
+        return redirect()->route('admin.users')->with('success', 'Data akun berhasil diperbarui!');
+    }
 }

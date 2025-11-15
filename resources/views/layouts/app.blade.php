@@ -219,10 +219,16 @@
                             </button>
                             <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                                 @if(auth()->user()->role === 'user')
+                                    <a href="{{ route('user.edit.profile') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                                        <i class="fas fa-user-edit"></i> Edit Profil
+                                    </a>
                                     <a href="{{ route('user.history.laporan') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
                                         <i class="fas fa-history"></i> History Laporan
                                     </a>
                                 @elseif(auth()->user()->role === 'umkm')
+                                    <a href="{{ route('umkm.edit.account') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                                        <i class="fas fa-user-edit"></i> Edit Akun
+                                    </a>
                                     <a href="{{ route('umkm.history.laporan') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
                                         <i class="fas fa-history"></i> History Laporan
                                     </a>
@@ -281,10 +287,16 @@
                         @endif
                         
                         @if(auth()->user()->role === 'user')
+                            <a href="{{ route('user.edit.profile') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
+                                <i class="fas fa-user-edit"></i> Edit Profil
+                            </a>
                             <a href="{{ route('user.history.laporan') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
                                 <i class="fas fa-history"></i> History Laporan
                             </a>
                         @elseif(auth()->user()->role === 'umkm')
+                            <a href="{{ route('umkm.edit.account') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
+                                <i class="fas fa-user-edit"></i> Edit Akun
+                            </a>
                             <a href="{{ route('umkm.history.laporan') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
                                 <i class="fas fa-history"></i> History Laporan
                             </a>

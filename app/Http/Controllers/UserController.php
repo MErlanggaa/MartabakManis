@@ -1348,4 +1348,39 @@ class UserController extends Controller
             'redirect' => $historyRoute
         ]);
     }
+
+    /**
+     * Show edit profile form for user
+     */
+    public function editProfile()
+    {
+        $user = Auth::user();
+        return view('user.edit-profile', compact('user'));
+    }
+
+    /**
+     * Update user's own profile (username, password only - email cannot be changed)
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+        
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'password' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        $updateData = [
+            'name' => $request->name,
+        ];
+
+        // Only update password if provided
+        if ($request->filled('password')) {
+            $updateData['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
+        }
+
+        $user->update($updateData);
+
+        return redirect()->route('user.edit.profile')->with('success', 'Profil berhasil diperbarui!');
+    }
 }

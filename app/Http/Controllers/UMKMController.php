@@ -12,6 +12,7 @@ use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
 // use PhpOffice\PhpSpreadsheet\Spreadsheet;
 // use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 // use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -662,5 +663,40 @@ class UMKMController extends Controller
             'commentsByLayanan',
             'averageRatingsLayanan'
         ));
+    }
+
+    /**
+     * Show edit account form for UMKM (username, password only - email cannot be changed)
+     */
+    public function editAccount()
+    {
+        $user = Auth::user();
+        return view('umkm.edit-account', compact('user'));
+    }
+
+    /**
+     * Update UMKM's own account (username, password only - email cannot be changed)
+     */
+    public function updateAccount(Request $request)
+    {
+        $user = Auth::user();
+        
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'password' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        $updateData = [
+            'name' => $request->name,
+        ];
+
+        // Only update password if provided
+        if ($request->filled('password')) {
+            $updateData['password'] = Hash::make($request->password);
+        }
+
+        $user->update($updateData);
+
+        return redirect()->route('umkm.edit.account')->with('success', 'Akun berhasil diperbarui!');
     }
 }
