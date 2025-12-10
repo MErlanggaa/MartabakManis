@@ -9,6 +9,7 @@ use App\Models\LayananUMKM;
 use App\Models\User;
 use App\Models\Report;
 use App\Models\Comment;
+use App\Models\Video;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -34,7 +35,11 @@ class UMKMController extends Controller
             $favoriteUsers = User::whereIn('id', $umkm->favorite)->get();
         }
         
-        return view('umkm.dashboard', compact('umkm', 'keuntungan', 'layanan', 'favoriteUsers'));
+        // Get videos
+        $videos = $umkm ? $umkm->videos()->latest()->get() : collect();
+        $totalVideoViews = $umkm ? $umkm->videos()->sum('views') : 0;
+        
+        return view('umkm.dashboard', compact('umkm', 'keuntungan', 'layanan', 'favoriteUsers', 'videos', 'totalVideoViews'));
     }
 
     public function updateProfile(Request $request)

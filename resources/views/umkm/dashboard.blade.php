@@ -155,11 +155,11 @@
             <div class="bg-gradient-to-br from-[#009b97] to-[#007a77] rounded-xl p-6 text-white shadow-lg">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-white/80 text-sm mb-1">Total Dilihat</p>
-                        <h3 class="text-3xl font-bold">{{ number_format($umkm->views ?? 0, 0, ',', '.') }}</h3>
+                        <p class="text-white/80 text-sm mb-1">Total Views Video</p>
+                        <h3 class="text-3xl font-bold">{{ number_format($totalVideoViews ?? 0, 0, ',', '.') }}</h3>
                     </div>
                     <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-eye text-2xl"></i>
+                        <i class="fas fa-play-circle text-2xl"></i>
                     </div>
                 </div>
             </div>
@@ -229,6 +229,50 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Video Management Section -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-video text-red-500"></i> Video Promosi
+                </h3>
+                <a href="{{ route('umkm.videos.create') }}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2">
+                    <i class="fas fa-plus"></i> Upload Video
+                </a>
+            </div>
+            
+            @if($videos->count() > 0)
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    @foreach($videos as $video)
+                        <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                            <div class="relative aspect-[9/16] bg-gray-100">
+                                <video src="{{ Storage::url($video->video_path) }}" class="w-full h-full object-cover"></video>
+                                <div class="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/10 transition-colors group">
+                                    <i class="fas fa-play-circle text-4xl text-white opacity-80 group-hover:scale-110 transition-transform"></i>
+                                </div>
+                                <div class="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                    <i class="fas fa-eye"></i> {{ number_format($video->views, 0, ',', '.') }}
+                                </div>
+                            </div>
+                            <div class="p-3">
+                                <p class="text-sm font-medium text-gray-900 line-clamp-2 mb-2">{{ $video->caption }}</p>
+                                <p class="text-xs text-gray-500">{{ $video->created_at->diffForHumans() }}</p>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="text-center py-8 bg-gray-50 rounded-lg">
+                    <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-video-slash text-gray-400 text-2xl"></i>
+                    </div>
+                    <p class="text-gray-500">Belum ada video yang diupload</p>
+                    <a href="{{ route('umkm.videos.create') }}" class="text-red-600 hover:text-red-700 font-medium text-sm mt-2 inline-block">
+                        Upload Video Pertama Anda
+                    </a>
+                </div>
+            @endif
         </div>
 
         <!-- Keuntungan Table -->

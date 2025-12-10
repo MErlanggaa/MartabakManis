@@ -63,4 +63,16 @@ class UMKM extends Model
     {
         return $this->hasMany(Comment::class);
     }
+
+    // Relasi dengan Videos
+    public function videos()
+    {
+        return $this->hasMany(Video::class, 'umkm_id');
+    }
+
+    // Relasi dengan Followers (User)
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'followers', 'umkm_id', 'user_id')->withTimestamps();
+    }
 }

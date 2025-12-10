@@ -55,9 +55,26 @@ class User extends Authenticatable
         return $this->hasOne(UMKM::class);
     }
 
+    public function reports()
+    {
+        return $this->hasMany(Report::class);
+    }
+
+    // Relasi Following UMKM
+    public function following()
+    {
+        return $this->belongsToMany(UMKM::class, 'followers', 'user_id', 'umkm_id')->withTimestamps();
+    }
+
     // Relasi dengan Comments
     public function comments()
     {
         return $this->hasMany(Comment::class);
+    }
+
+    // Relasi Video yang disukai
+    public function likedVideos()
+    {
+        return $this->belongsToMany(Video::class, 'video_likes', 'user_id', 'video_id')->withTimestamps();
     }
 }

@@ -46,6 +46,19 @@
                 @endphp
 
                 @auth
+                <!-- Follow Button -->
+                @php
+                    $isFollowing = auth()->user()->following->contains($umkm->id);
+                @endphp
+                <form action="{{ route('user.follow.toggle', $umkm->id) }}" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" 
+                            class="inline-flex items-center gap-2 border {{ $isFollowing ? 'border-gray-300 bg-gray-50 text-gray-600' : 'border-blue-500 bg-blue-500 text-white' }} hover:{{ $isFollowing ? 'bg-gray-100' : 'bg-blue-600' }} px-4 py-2 rounded-lg transition-colors">
+                        <i class="{{ $isFollowing ? 'fas fa-check' : 'fas fa-plus' }}"></i>
+                        <span>{{ $isFollowing ? 'Mengikuti' : 'Ikuti' }}</span>
+                    </button>
+                </form>
+
                 <button class="favorite-btn inline-flex items-center gap-2 border {{ $isFav ? 'border-red-300 bg-red-50 text-red-600' : 'border-red-300 text-red-600' }} hover:bg-red-50 px-4 py-2 rounded-lg transition-colors"
                         data-umkm-id="{{ $umkm->id }}">
                     <i class="{{ $isFav ? 'fas' : 'far' }} fa-heart"></i>

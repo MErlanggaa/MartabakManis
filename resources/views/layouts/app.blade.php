@@ -281,15 +281,15 @@
                                 <i class="fas fa-home"></i> Beranda
                             </a>
                         @else
-                            <a href="{{ route('public.katalog') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
+                            <!-- <a href="{{ route('public.katalog') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
                                 <i class="fas fa-home"></i> Beranda
-                            </a>
+                            </a> -->
                         @endif
                         
                         @if(auth()->user()->role === 'user')
-                            <a href="{{ route('user.edit.profile') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
+                            <!-- <a href="{{ route('user.edit.profile') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
                                 <i class="fas fa-user-edit"></i> Edit Profil
-                            </a>
+                            </a> -->
                             <a href="{{ route('user.history.laporan') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
                                 <i class="fas fa-history"></i> History Laporan
                             </a>
@@ -586,6 +586,26 @@
         });
     </script>
     
+    <!-- Mobile Bottom Navigation (User Only) -->
+    @if(auth()->check() && auth()->user()->role === 'user')
+    <div style="position: fixed; bottom: 0; left: 0; right: 0; width: 100%; z-index: 9999; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);" class="bg-white border-t border-gray-200 md:hidden">
+        <div class="grid grid-cols-3 h-16">
+            <a href="{{ route('public.katalog') }}" class="flex flex-col items-center justify-center h-full transition-colors {{ request()->routeIs('public.katalog', 'user.katalog') ? 'text-[#009b97]' : 'text-gray-400 hover:text-gray-600' }}">
+                <i class="fas fa-home text-xl mb-1"></i>
+                <span class="text-xs font-medium">Beranda</span>
+            </a>
+            <a href="{{ route('videos.index') }}" class="flex flex-col items-center justify-center h-full transition-colors {{ request()->routeIs('videos.*') ? 'text-[#009b97]' : 'text-gray-400 hover:text-gray-600' }}">
+                <i class="fas fa-play-circle text-xl mb-1"></i>
+                <span class="text-xs font-medium">Video</span>
+            </a>
+            <a href="{{ route('user.account') }}" class="flex flex-col items-center justify-center h-full transition-colors {{ request()->routeIs('user.account') ? 'text-[#009b97]' : 'text-gray-400 hover:text-gray-600' }}">
+                <i class="fas fa-user text-xl mb-1"></i>
+                <span class="text-xs font-medium">Akun</span>
+            </a>
+        </div>
+    </div>
+    @endif
+
     @yield('scripts')
 </body>
 </html>

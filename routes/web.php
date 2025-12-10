@@ -8,6 +8,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GoogleMapsController;
 use App\Http\Controllers\AIConsultationController;
 use App\Http\Controllers\UserAIChatController;
+use App\Http\Controllers\VideoController;
+use App\Http\Controllers\FollowController;
 
 // Public routes
 Route::get('/', function () {
@@ -72,6 +74,10 @@ Route::middleware(['auth', 'role:umkm'])->prefix('umkm')->name('umkm.')->group(f
     
     // Komentar
     Route::get('/komentar', [UMKMController::class, 'komentar'])->name('komentar');
+
+    // Video
+    Route::get('/videos/create', [VideoController::class, 'create'])->name('videos.create');
+    Route::post('/videos', [VideoController::class, 'store'])->name('videos.store');
 });
 
 // User routes
@@ -92,6 +98,10 @@ Route::middleware(['auth', 'role:user'])->prefix('user')->name('user.')->group(f
     // Profile management
     Route::get('/profile/edit', [UserController::class, 'editProfile'])->name('edit.profile');
     Route::put('/profile/update', [UserController::class, 'updateProfile'])->name('update.profile');
+    Route::get('/account', [UserController::class, 'account'])->name('account');
+    
+    // Follow
+    Route::post('/umkm/{umkm}/follow', [FollowController::class, 'toggle'])->name('follow.toggle');
 });
 
 // Public UMKM catalog (for non-authenticated users)
@@ -100,6 +110,21 @@ Route::get('/umkm/{id}', [UserController::class, 'show'])->name('public.umkm.sho
 Route::get('/layanan/{id}', [UserController::class, 'showLayanan'])->name('public.layanan.show');
 Route::get('/laporan', [UserController::class, 'laporan'])->name('public.laporan');
 Route::post('/laporan', [UserController::class, 'submitLaporan'])->name('public.laporan.submit');
+
+// Public Video routes
+Route::get('/videos', [VideoController::class, 'index'])->name('videos.index');
+Route::get('/videos/{video}', [VideoController::class, 'show'])->name('videos.show');
+Route::get('/videos/umkm/{id}', [App\Http\Controllers\UMKMVideoProfileController::class, 'show'])->name('videos.umkm.profile');
+
+// Video social features (require auth)
+Route::middleware('auth')->group(function () {
+    Route::post('/videos/{video}/like', [App\Http\Controllers\VideoLikeController::class, 'toggle'])->name('videos.like');
+    Route::post('/videos/{video}/comment', [App\Http\Controllers\VideoCommentController::class, 'store'])->name('videos.comment');
+    Route::get('/videos/{video}/comments', [App\Http\Controllers\VideoCommentController::class, 'index'])->name('videos.comments');
+});
+
+// Video view tracking (public)
+Route::post('/videos/{video}/view', [VideoController::class, 'incrementView'])->name('videos.view');
 
 // Comment routes (require authentication)
 Route::middleware('auth')->group(function () {

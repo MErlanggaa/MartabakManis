@@ -1383,4 +1383,17 @@ class UserController extends Controller
 
         return redirect()->route('user.edit.profile')->with('success', 'Profil berhasil diperbarui!');
     }
+
+    public function account()
+    {
+        $user = Auth::user();
+        
+        // Get following list
+        $following = $user->following ?? collect([]);
+        
+        // Get liked videos
+        $likedVideos = $user->likedVideos()->with('umkm')->latest('pivot_created_at')->get();
+        
+        return view('user.account', compact('user', 'following', 'likedVideos'));
+    }
 }
