@@ -20,11 +20,11 @@
             height: 100vh;
             background: linear-gradient(135deg, #ffffff 0%, #e0f7fa 100%);
             z-index: 99999;
-            display: none;
+            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            opacity: 0;
+            opacity: 1;
             transition: opacity 0.3s ease-out;
             overflow: hidden;
         }
@@ -550,8 +550,21 @@
             });
             
             // Show loading before page unload (transisi)
-            window.addEventListener('beforeunload', function() {
-                showLoading();
+            // Disable beforeunload loading for better bfcache support especially on mobile gestures
+            // window.addEventListener('beforeunload', function(e) { showLoading(); });
+
+            // Clean up loading screen explicitly when page is shown
+            // This handles back/forward button and gesture navigation
+            window.addEventListener('pageshow', function(event) {
+                // Always Force hide loading on page show, regardless of whether it was persisted
+                // setTimeout ensures it runs after any browser rendering quirks
+                setTimeout(function() {
+                    hideLoading();
+                    if (loadingScreen) {
+                       loadingScreen.style.display = 'none'; // Hard hide
+                       loadingScreen.classList.add('hidden');
+                    }
+                }, 10);
             });
         })();
     </script>
