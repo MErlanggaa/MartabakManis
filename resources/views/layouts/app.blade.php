@@ -206,10 +206,20 @@
                             <a href="{{ route('umkm.dashboard') }}" class="text-gray-700 hover:text-gray-900 transition-colors">
                                 <i class="fas fa-home"></i> Beranda
                             </a>
+                        @elseif(auth()->user()->role === 'user')
+                            <a href="{{ route('public.katalog') }}" class="text-gray-700 hover:text-gray-900 transition-colors">
+                                <i class="fas fa-th-large"></i> Katalog
+                            </a>
+                               <a href="{{ route('videos.index') }}" class="text-gray-700 hover:text-gray-900 transition-colors">
+                <i class="fas fa-play-circle text-xl mb-1"></i>
+                Video
+            </a>
+                          
                         @else
                             <a href="{{ route('public.katalog') }}" class="text-gray-700 hover:text-gray-900 transition-colors">
                                 <i class="fas fa-home"></i> Beranda
                                 </a>
+                            
                         @endif
                         
                         <div class="relative group">
