@@ -166,7 +166,7 @@ class AdminController extends Controller
             // Send to external API
             $response = Http::timeout(60)
                 ->attach('file', file_get_contents($file->getPathname()), $file->getClientOriginalName())
-                ->post('https://ai-martabakmanis-production.up.railway.app/admin/upload');
+                ->post('https://ai-umkmm-go.sgp.dom.my.id/admin/upload');
 
             if ($response->successful()) {
                 $data = $response->json();

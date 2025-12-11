@@ -31,7 +31,7 @@ class UserAIChatController extends Controller
             
             // Send question to AI API with database context
             $response = Http::timeout(30)
-                ->post('https://ai-martabakmanis-production.up.railway.app/chat', [
+                ->post('https://ai-umkmm-go.sgp.dom.my.id/chat', [
                     'question' => $question,
                     'database_context' => $databaseContext // Send database data to help AI
                 ]);
@@ -310,7 +310,7 @@ class UserAIChatController extends Controller
             
             // Request AI again with correction
             $response = Http::timeout(30)
-                ->post('https://ai-martabakmanis-production.up.railway.app/chat', [
+                ->post('https://ai-umkmm-go.sgp.dom.my.id/chat', [
                     'question' => $correctionMessage,
                     'database_context' => $databaseContext,
                     'correction_mode' => true // Flag to indicate this is a correction request

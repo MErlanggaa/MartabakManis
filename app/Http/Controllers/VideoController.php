@@ -65,14 +65,36 @@ class VideoController extends Controller
 
     public function show(Video $video)
     {
-        // Increment views only once per session
-        $sessionKey = 'video_viewed_' . $video->id;
-        if (!session()->has($sessionKey)) {
-            $video->increment('views');
-            session()->put($sessionKey, true);
+        // Increment views
+        $video->increment('views');
+        
+        // Handle "Liked Videos" feed context
+        if (request('source') === 'liked' && Auth::check()) {
+            // Get all liked videos ordered by latest like
+            $likedVideos = Auth::user()->likedVideos()
+                ->with(['umkm', 'products', 'likes', 'comments'])
+                ->withCount(['likes', 'comments'])
+                ->orderByPivot('created_at', 'desc')
+                ->get();
+
+            // Reorder collection: Put the current video first, then the rest
+            // This ensures the user lands on the clicked video but can scroll to others
+            $videos = $likedVideos->reject(function ($v) use ($video) {
+                return $v->id === $video->id; // Remove current video from list
+            })->prepend($video); // Add it back to the beginning
+            
+            // Ensure the relationships are loaded on the prepended video instance too
+            $video->load(['umkm', 'products', 'likes', 'comments']);
+            $video->loadCount(['likes', 'comments']);
+            
+        } else {
+            // Default behavior: Show only this video
+            $videos = collect([$video]);
+            $video->load(['umkm', 'products', 'likes', 'comments']);
+            $video->loadCount(['likes', 'comments']);
         }
         
-        return view('videos.show', compact('video'));
+        return view('videos.index', compact('videos'));
     }
 
     public function incrementView(Request $request, Video $video)

@@ -107,11 +107,13 @@
                 @if($likedVideos->count() > 0)
                     <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1">
                         @foreach($likedVideos as $video)
-                            <a href="{{ route('videos.show', $video->id) }}" class="relative aspect-[9/16] bg-black block group overflow-hidden">
-                                <video src="{{ Storage::url($video->video_path) }}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"></video>
-                                <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/60 pointer-events-none"></div>
-                                <div class="absolute bottom-2 left-2 flex items-center text-white text-xs font-bold drop-shadow-md">
-                                    <i class="fas fa-play mr-1"></i> {{ number_format($video->views) }}
+                            <a href="{{ route('videos.show', $video->id) }}?source=liked" class="block relative aspect-[9/16] bg-gray-200 rounded-xl overflow-hidden group">
+                                <img src="{{ $video->thumbnail_path ? Storage::url($video->thumbnail_path) : 'https://via.placeholder.com/300x533?text=Video' }}" alt="Video Thumbnail" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                
+                                <div class="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors"></div>
+                                
+                                <div class="absolute top-2 left-2 flex items-center gap-1 text-white text-xs font-bold drop-shadow-md">
+                                    <i class="fas fa-play"></i> {{ number_format($video->views) }}
                                 </div>
                             </a>
                         @endforeach
