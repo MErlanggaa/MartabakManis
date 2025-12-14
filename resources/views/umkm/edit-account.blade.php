@@ -21,6 +21,10 @@
             </a>
         </div>
     </div>
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
+    @csrf
+</form>
+
 
     <form method="POST" action="{{ route('umkm.update.account') }}" class="space-y-6">
         @csrf
@@ -33,17 +37,20 @@
                 </h2>
                 
                 <!-- Buttons visible only on Mobile (md:hidden) because Desktop has Header Menu -->
-                <div class="flex gap-2 w-full md:w-auto md:hidden">
-                    <a href="{{ route('umkm.history.laporan') }}" class="flex-1 text-center px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-medium transition-colors">
-                        <i class="fas fa-history mr-1"></i> History
-                    </a>
-                    <form action="{{ route('logout') }}" method="POST" class="flex-1">
-                        @csrf
-                        <button type="submit" class="w-full px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium transition-colors">
-                            <i class="fas fa-sign-out-alt mr-1"></i> Logout
-                        </button>
-                    </form>
-                </div>
+             <!-- Buttons visible only on Mobile (md:hidden) because Desktop has Header Menu -->
+<div class="flex gap-2 w-full md:w-auto md:hidden">
+    <a href="{{ route('umkm.history.laporan') }}"
+       class="flex-1 text-center px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-medium transition-colors">
+        <i class="fas fa-history mr-1"></i> History
+    </a>
+
+    <button type="button"
+            onclick="document.getElementById('logout-form').submit()"
+            class="flex-1 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium transition-colors">
+        <i class="fas fa-sign-out-alt mr-1"></i> Logout
+    </button>
+</div>
+
             </div>
             
             <div class="space-y-4">
