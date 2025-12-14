@@ -27,9 +27,24 @@
         @method('PUT')
         
         <div class="bg-white rounded-xl shadow-sm p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <i class="fas fa-user text-purple-500"></i> Informasi Akun
-            </h2>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-user text-purple-500"></i> Informasi Akun
+                </h2>
+                
+                <!-- Buttons visible only on Mobile (md:hidden) because Desktop has Header Menu -->
+                <div class="flex gap-2 w-full md:w-auto md:hidden">
+                    <a href="{{ route('umkm.history.laporan') }}" class="flex-1 text-center px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-medium transition-colors">
+                        <i class="fas fa-history mr-1"></i> History
+                    </a>
+                    <form action="{{ route('logout') }}" method="POST" class="flex-1">
+                        @csrf
+                        <button type="submit" class="w-full px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
             
             <div class="space-y-4">
                 <div>

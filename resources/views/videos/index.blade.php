@@ -334,9 +334,14 @@
                     const count = btn.parentElement.querySelector('.like-count');
                     
                     if (data.liked) {
-                        icon.classList.add('text-red-500');
+                        icon.classList.remove('text-white');
+                        icon.classList.add('text-red-500', 'fas');
+                        icon.classList.remove('far'); // Just in case
                     } else {
-                        icon.classList.remove('text-red-500');
+                        icon.classList.remove('text-red-500', 'fas');
+                        icon.classList.add('text-white', 'fas'); // Keep fas/solid for visibility or far
+                        // Check if we want outline when unlike? Usually heart is solid just changing color
+                        // Assuming solid white when not liked based on TikTok style
                     }
                     
                     count.textContent = new Intl.NumberFormat('id-ID').format(data.likes_count);

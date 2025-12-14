@@ -229,11 +229,8 @@
                             </button>
                             <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                                 @if(auth()->user()->role === 'user')
-                                    <a href="{{ route('user.edit.profile') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
-                                        <i class="fas fa-user-edit"></i> Edit Profil
-                                    </a>
-                                    <a href="{{ route('user.history.laporan') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
-                                        <i class="fas fa-history"></i> History Laporan
+                                    <a href="{{ route('user.account') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                                        <i class="fas fa-user-circle"></i> Detail Akun
                                     </a>
                                 @elseif(auth()->user()->role === 'umkm')
                                     <a href="{{ route('umkm.edit.account') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
@@ -243,6 +240,7 @@
                                         <i class="fas fa-history"></i> History Laporan
                                     </a>
                                 @endif
+                                
                                 <form action="{{ route('logout') }}" method="POST">
                                     @csrf
                                     <button type="submit" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
@@ -261,14 +259,19 @@
                 <!-- Mobile Menu Button -->
                 <div class="md:hidden flex items-center">
                     @auth
+                        @if(auth()->user()->role !== 'user' && auth()->user()->role !== 'umkm')
+                            <button id="mobile-menu-button" class="text-gray-700 hover:text-gray-900 focus:outline-none focus:text-gray-900 transition-colors p-2">
+                                <i class="fas fa-bars text-2xl"></i>
+                            </button>
+                        @endif
                     @else
                         <a href="{{ route('login') }}" class="bg-[#009b97] hover:bg-[#007a77] text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm mr-3 shadow-md hover:shadow-lg">
                             Masuk
                         </a>
+                        <button id="mobile-menu-button" class="text-gray-700 hover:text-gray-900 focus:outline-none focus:text-gray-900 transition-colors p-2">
+                            <i class="fas fa-bars text-2xl"></i>
+                        </button>
                     @endauth
-                    <button id="mobile-menu-button" class="text-gray-700 hover:text-gray-900 focus:outline-none focus:text-gray-900 transition-colors p-2">
-                        <i class="fas fa-bars text-2xl"></i>
-                    </button>
                 </div>
             </div>
 
@@ -367,7 +370,7 @@
 
     <!-- Footer -->
     @if(!$isAuthPage)
-    <footer class="mt-auto">
+<footer class="mt-auto {{ auth()->check() && in_array(auth()->user()->role, ['user','umkm']) ? 'pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-0' : '' }}">
         <!-- Footer Bagian Putih -->
         <div class="bg-white text-gray-800 py-12 border-t-2 border-gray-200 shadow-lg">
             <div class="container mx-auto px-4">
@@ -412,39 +415,32 @@
         </div>
 
         <!-- Footer Bagian Hijau -->
-        <div class="bg-[#218689] text-white py-6">
-        <div class="container mx-auto px-4">
-                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <!-- Social Media Icons -->
-                    <div class="flex items-center gap-4">
-                        <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="YouTube">
-                            <i class="fab fa-youtube text-2xl"></i>
-                        </a>
-                        <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="WhatsApp">
-                            <i class="fab fa-whatsapp text-2xl"></i>
-                </a>
-                        <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Facebook">
-                    <i class="fab fa-facebook text-2xl"></i>
-                </a>
-                        <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="LinkedIn">
-                    <i class="fab fa-linkedin text-2xl"></i>
-                </a>
-                        <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Instagram">
-                            <i class="fab fa-instagram text-2xl"></i>
-                </a>
-                        <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Twitter">
-                    <i class="fab fa-twitter text-2xl"></i>
-                </a>
+<div class="bg-[#218689] text-white px-4 py-4">
+    <div class="container mx-auto">
+        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div class="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="YouTube"><i class="fab fa-youtube text-2xl"></i></a>
+                <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="WhatsApp"><i class="fab fa-whatsapp text-2xl"></i></a>
+                <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Facebook"><i class="fab fa-facebook text-2xl"></i></a>
+                <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="LinkedIn"><i class="fab fa-linkedin text-2xl"></i></a>
+                <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Instagram"><i class="fab fa-instagram text-2xl"></i></a>
+                <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Twitter"><i class="fab fa-twitter text-2xl"></i></a>
             </div>
-                    <!-- Copyright -->
-                    <p class="text-white text-sm text-center md:text-right">
-                        © 2025 Martabak Manis    | All Rights Reserved.
+
+            <p class="text-white text-sm text-center md:text-right whitespace-nowrap">
+                © 2025 Martabak Manis | All Rights Reserved.
             </p>
-                </div>
-            </div>
         </div>
+    </div>
+</div>
+
     </footer>
     @endif
+    @if(auth()->check() && in_array(auth()->user()->role, ['user','umkm']))
+    <div class="h-16 md:hidden"></div>
+@endif
+
+  
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
@@ -501,6 +497,7 @@
                     !link.href.startsWith('#') && 
                     link.href !== '#' &&
                     !link.hasAttribute('data-no-loading') &&
+                    !link.closest('.leaflet-control') && // Ignore Leaflet map controls
                     link.hostname === window.location.hostname &&
                     link.href !== window.location.href) {
                     
@@ -609,9 +606,10 @@
         });
     </script>
     
-    <!-- Mobile Bottom Navigation (User Only) -->
-    @if(auth()->check() && auth()->user()->role === 'user')
+    <!-- Mobile Bottom Navigation (User & UMKM) -->
+    @if(auth()->check() && (auth()->user()->role === 'user' || auth()->user()->role === 'umkm'))
     <div style="position: fixed; bottom: 0; left: 0; right: 0; width: 100%; z-index: 9999; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);" class="bg-white border-t border-gray-200 md:hidden">
+        @if(auth()->user()->role === 'user')
         <div class="grid grid-cols-3 h-16">
             <a href="{{ route('public.katalog') }}" class="flex flex-col items-center justify-center h-full transition-colors {{ request()->routeIs('public.katalog', 'user.katalog') ? 'text-[#009b97]' : 'text-gray-400 hover:text-gray-600' }}">
                 <i class="fas fa-home text-xl mb-1"></i>
@@ -626,6 +624,22 @@
                 <span class="text-xs font-medium">Akun</span>
             </a>
         </div>
+        @elseif(auth()->user()->role === 'umkm')
+        <div class="grid grid-cols-3 h-16">
+            <a href="{{ route('umkm.dashboard') }}" class="flex flex-col items-center justify-center h-full transition-colors {{ request()->routeIs('umkm.dashboard') ? 'text-[#009b97]' : 'text-gray-400 hover:text-gray-600' }}">
+                <i class="fas fa-chart-line text-xl mb-1"></i>
+                <span class="text-xs font-medium">Dashboard</span>
+            </a>
+            <a href="{{ route('public.katalog') }}" class="flex flex-col items-center justify-center h-full transition-colors {{ request()->routeIs('public.katalog') ? 'text-[#009b97]' : 'text-gray-400 hover:text-gray-600' }}">
+                <i class="fas fa-store text-xl mb-1"></i>
+                <span class="text-xs font-medium">Katalog</span>
+            </a>
+            <a href="{{ route('umkm.edit.account') }}" class="flex flex-col items-center justify-center h-full transition-colors {{ request()->routeIs('umkm.edit.account', 'umkm.history.laporan') ? 'text-[#009b97]' : 'text-gray-400 hover:text-gray-600' }}">
+                <i class="fas fa-user-circle text-xl mb-1"></i>
+                <span class="text-xs font-medium">Profil</span>
+            </a>
+        </div>
+        @endif
     </div>
     @endif
 
