@@ -20,6 +20,9 @@
                 <a href="{{ route('admin.users') }}" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2">
                     <i class="fas fa-users"></i> Manajemen Akun
                 </a>
+                <a href="{{ route('admin.wallet.index') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2">
+                    <i class="fas fa-wallet"></i> Manajemen Dompet
+                </a>
                 <a href="{{ route('admin.laporan') }}" class="bg-[#009b97] hover:bg-[#007a77] text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2">
                     <i class="fas fa-bug"></i> Laporan
                 </a>
@@ -34,7 +37,21 @@
     </div>
 
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <!-- Pending Wallet Card -->
+        <a href="{{ route('admin.wallet.index') }}" class="block transform transition-transform hover:scale-105">
+            <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg h-full">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-indigo-100 text-sm mb-1">Transaksi Pending</p>
+                        <h3 class="text-3xl font-bold">{{ $pendingWalletCount }}</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-wallet text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
         <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
             <div class="flex items-center justify-between">
                 <div>

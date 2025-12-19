@@ -43,6 +43,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/users', [AdminController::class, 'users'])->name('users');
     Route::get('/users/{id}/edit', [AdminController::class, 'editUser'])->name('users.edit');
     Route::put('/users/{id}/update', [AdminController::class, 'updateUser'])->name('users.update');
+
+    // Wallet (Admin)
+    Route::get('/wallet', [App\Http\Controllers\AdminWalletController::class, 'index'])->name('wallet.index');
+    Route::post('/wallet/{transaction}/approve', [App\Http\Controllers\AdminWalletController::class, 'approve'])->name('wallet.approve');
+    Route::post('/wallet/{transaction}/reject', [App\Http\Controllers\AdminWalletController::class, 'reject'])->name('wallet.reject');
 });
 
 // UMKM routes
@@ -81,6 +86,13 @@ Route::middleware(['auth', 'role:umkm'])->prefix('umkm')->name('umkm.')->group(f
     Route::get('/videos/{video}/edit', [VideoController::class, 'edit'])->name('videos.edit');
     Route::put('/videos/{video}', [VideoController::class, 'update'])->name('videos.update');
     Route::delete('/videos/{video}', [VideoController::class, 'destroy'])->name('videos.destroy');
+
+    // Wallet (UMKM)
+    Route::get('/wallet', [App\Http\Controllers\WalletController::class, 'index'])->name('wallet.index');
+    Route::get('/wallet/topup', [App\Http\Controllers\WalletController::class, 'topup'])->name('wallet.topup');
+    Route::post('/wallet/topup', [App\Http\Controllers\WalletController::class, 'storeTopup'])->name('wallet.storeTopup');
+    Route::get('/wallet/withdraw', [App\Http\Controllers\WalletController::class, 'withdraw'])->name('wallet.withdraw');
+    Route::post('/wallet/withdraw', [App\Http\Controllers\WalletController::class, 'storeWithdraw'])->name('wallet.storeWithdraw');
 });
 
 // User routes

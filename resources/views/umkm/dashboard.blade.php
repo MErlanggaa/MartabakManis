@@ -17,6 +17,9 @@
                 <p class="text-gray-600 mt-2">Kelola profil, data keuntungan, dan layanan UMKM Anda</p>
             </div>
             <div class="flex flex-wrap gap-2">
+                <a href="{{ route('umkm.wallet.index') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2">
+                    <i class="fas fa-wallet"></i> Dompet
+                </a>
                 <a href="{{ route('umkm.ai-consultation') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2">
                     <i class="fas fa-robot"></i> AI Konsultasi
                 </a>
@@ -103,7 +106,23 @@
         </div>
 
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+            <!-- Saldo Card -->
+            <a href="{{ route('umkm.wallet.index') }}" class="block transform transition-transform hover:scale-105">
+                <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg h-full">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-indigo-100 text-sm mb-1">Saldo Dompet</p>
+                            <h3 class="text-2xl font-bold">Rp {{ number_format($umkm->saldo ?? 0, 0, ',', '.') }}</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-wallet text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
             <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
                 <div class="flex items-center justify-between">
                     <div>

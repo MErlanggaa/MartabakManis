@@ -10,12 +10,15 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
 
+use App\Models\WalletTransaction;
+
 class AdminController extends Controller
 {
     public function index()
     {
         $umkm = UMKM::with('user')->get();
-        return view('admin.dashboard', compact('umkm'));
+        $pendingWalletCount = WalletTransaction::where('status', 'pending')->count();
+        return view('admin.dashboard', compact('umkm', 'pendingWalletCount'));
     }
 
     public function createUmkm()

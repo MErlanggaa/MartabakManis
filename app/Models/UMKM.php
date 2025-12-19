@@ -75,4 +75,9 @@ class UMKM extends Model
     {
         return $this->belongsToMany(User::class, 'followers', 'umkm_id', 'user_id')->withTimestamps();
     }
+
+    public function walletTransactions()
+    {
+        return $this->hasMany(WalletTransaction::class, 'umkm_id');
+    }
 }
