@@ -246,10 +246,18 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     @foreach($videos as $video)
                         <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                            <div class="relative aspect-[9/16] bg-gray-100">
+                            <div class="relative aspect-[9/16] bg-gray-100 group">
                                 <video src="{{ Storage::url($video->video_path) }}" class="w-full h-full object-cover"></video>
-                                <div class="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/10 transition-colors group">
+                                <div class="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/10 transition-colors">
                                     <i class="fas fa-play-circle text-4xl text-white opacity-80 group-hover:scale-110 transition-transform"></i>
+                                </div>
+                                <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                    <button onclick="event.preventDefault(); editVideo({{ $video->id }})" class="bg-white/90 p-2 rounded-full text-blue-600 hover:text-blue-700 hover:bg-white shadow-sm transition-all" title="Edit Video">
+                                        <i class="fas fa-edit text-xs"></i>
+                                    </button>
+                                    <button onclick="event.preventDefault(); deleteVideo({{ $video->id }})" class="bg-white/90 p-2 rounded-full text-red-600 hover:text-red-700 hover:bg-white shadow-sm transition-all" title="Hapus Video">
+                                        <i class="fas fa-trash text-xs"></i>
+                                    </button>
                                 </div>
                                 <div class="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
                                     <i class="fas fa-eye"></i> {{ number_format($video->views, 0, ',', '.') }}
@@ -601,6 +609,51 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Edit Video Modal -->
+<div id="editVideoModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full">
+        <div class="flex justify-between items-center p-6 border-b">
+            <h3 class="text-xl font-semibold">Edit Video</h3>
+            <button onclick="closeModal('editVideoModal')" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="editVideoForm" class="p-6 space-y-4">
+            @csrf
+            @method('PUT')
+            <input type="hidden" id="edit_video_id">
+            
+            <div>
+                <label for="edit_video_caption" class="block text-sm font-medium text-gray-700 mb-2">Caption</label>
+                <textarea id="edit_video_caption" name="caption" rows="3" 
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
+            </div>
+
+            <div>
+                <label for="edit_video_product" class="block text-sm font-medium text-gray-700 mb-2">Tautkan Produk (Opsional)</label>
+                <select id="edit_video_product" name="product_id" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <option value="">-- Pilih Produk --</option>
+                    @if(isset($umkm) && $umkm->layanan)
+                        @foreach($umkm->layanan as $product)
+                            <option value="{{ $product->id }}">{{ $product->nama }}</option>
+                        @endforeach
+                    @endif
+                </select>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t">
+                <button type="button" onclick="closeModal('editVideoModal')" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Batal
+                </button>
+                <button type="submit" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg">
+                    Simpan Perubahan
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 @endsection
@@ -1529,6 +1582,115 @@
                 toast.remove();
             }, 300);
         }
+    }
+    // Video Functions
+    function editVideo(id) {
+        fetch(`/umkm/videos/${id}/edit`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.error) return Swal.fire('Error', data.error, 'error');
+            
+            document.getElementById('edit_video_id').value = data.id;
+            document.getElementById('edit_video_caption').value = data.caption || '';
+            document.getElementById('edit_video_product').value = data.product_id || '';
+             
+            // Show modal
+            document.getElementById('editVideoModal').classList.remove('hidden');
+        })
+        .catch(err => console.error(err));
+    }
+
+    document.getElementById('editVideoForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id = document.getElementById('edit_video_id').value;
+        const formData = new FormData(this);
+        
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+        submitBtn.disabled = true;
+
+        fetch(`/umkm/videos/${id}`, { 
+             method: 'POST',
+             headers: {
+                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                 'X-HTTP-Method-Override': 'PUT',
+                 'Accept': 'application/json'
+             },
+             body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: data.message,
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => location.reload());
+            } else {
+                Swal.fire('Gagal', data.message, 'error');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(err => {
+             console.error(err);
+             Swal.fire('Error', 'Terjadi kesalahan sistem', 'error');
+             submitBtn.innerHTML = originalText;
+             submitBtn.disabled = false;
+        });
+    });
+
+    function deleteVideo(id) {
+        Swal.fire({
+            title: 'Hapus Video?',
+            text: 'Video yang dihapus tidak dapat dikembalikan!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Menghapus...',
+                    allowOutsideClick: false, 
+                    didOpen: () => Swal.showLoading()
+                });
+                
+                fetch(`/umkm/videos/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-HTTP-Method-Override': 'DELETE',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Terhapus!',
+                            text: data.message,
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire('Gagal', data.message, 'error');
+                    }
+                })
+                .catch(err => {
+                     console.error(err);
+                     Swal.fire('Error', 'Terjadi kesalahan sistem', 'error');
+                });
+            }
+        });
     }
 </script>
 @endsection
