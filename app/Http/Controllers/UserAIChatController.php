@@ -29,104 +29,55 @@ class UserAIChatController extends Controller
             // Get database data to help AI if needed
             $databaseContext = $this->getDatabaseContext($question);
             
-            // Send question to AI API with database context
-            $response = Http::timeout(30)
-                ->post('https://ai-umkmm-go.sgp.dom.my.id/chat', [
-                    'question' => $question,
-                    'database_context' => $databaseContext // Send database data to help AI
-                ]);
+            // Use Gemini API
+            $geminiApiKey = 'Set Api';
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . $geminiApiKey;
+            
+            $context = "Anda adalah AI Assistant yang ramah untuk platform UMKM.go. Anda bertugas membantu pelanggan menemukan produk/layanan UMKM, memberikan informasi, dan menjawab pertanyaan terkait UMKM yang terdaftar.\n\n";
+            $context .= "INFORMASI DATABASE UMKM SAAT INI (Tersedia " . count($databaseContext['umkm_list'] ?? []) . " UMKM dan " . count($databaseContext['layanan_list'] ?? []) . " layanan):\n" . json_encode($databaseContext) . "\n\n";
+            $context .= "PERTANYAAN PENGGUNA:\n" . $question . "\n\n";
+            $context .= "INSTRUKSI UNTUK ANDA:\n";
+            $context .= "1. Berikan jawaban yang ramah, ringkas, dan sangat membantu.\n";
+            $context .= "2. Jika ditanya tentang daftar UMKM atau menu/layanan, gunakan HANYA informasi dari database yang diberikan di atas. Jangan membuat data fiktif.\n";
+            $context .= "3. Jawab dalam bahasa Indonesia yang baik dan menarik, namun jangan terlalu panjang.\n";
+            $context .= "4. Sebutkan nama layanan dan UMKM yang sesuai dengan pertanyaan pengguna dari konteks yang diberikan.\n";
+
+            $response = Http::timeout(60)->post($url, [
+                'contents' => [
+                    [
+                        'parts' => [
+                            [
+                                'text' => $context
+                            ]
+                        ]
+                    ]
+                ],
+                'generationConfig' => [
+                    'temperature' => 0.7,
+                    'maxOutputTokens' => 2048,
+                ]
+            ]);
 
             if ($response->failed()) {
                 Log::error('AI chat API error: ' . $response->body());
-                return response()->json([
-                    'success' => false, 
-                    'message' => 'AI service error. Silakan coba lagi nanti.'
-                ], 502);
-            }
-
-            $data = $response->json();
-            
-            // Handle response dari API - support multiple formats
-            // AI API might return: {"intent":"qa","answer":"...","umkm_list":[],"recommendations":[]}
-            // Or: {"reply":"..."} or {"answer":"..."}
-            // Or: {"reply":"{\"intent\":\"qa\",\"answer\":\"...\"}"} (nested JSON string)
-            
-            $reply = null;
-            
-            // First, check if data directly contains 'answer' field (most common case)
-            if (isset($data['answer']) && is_string($data['answer'])) {
-                $reply = $data['answer'];
-            }
-            // Check if data contains 'reply' field
-            elseif (isset($data['reply'])) {
-                $rawReply = $data['reply'];
+            } else {
+                $data = $response->json();
                 
-                // If reply is a JSON string, parse it
-                if (is_string($rawReply)) {
-                    // Check if it's a JSON string
-                    if (strpos(trim($rawReply), '{') === 0) {
-                        $decoded = json_decode($rawReply, true);
-                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                            // Response is JSON, extract answer
-                            $reply = $decoded['answer'] ?? $decoded['reply'] ?? $rawReply;
-                        } else {
-                            // Not valid JSON, use as is
-                            $reply = $rawReply;
-                        }
-                    } else {
-                        // Not JSON, use as is
-                        $reply = $rawReply;
-                    }
-                } else {
-                    // Already an array or object
-                    if (is_array($rawReply)) {
-                        $reply = $rawReply['answer'] ?? $rawReply['reply'] ?? json_encode($rawReply);
-                    } else {
-                        $reply = $rawReply;
-                    }
-                }
-            }
-            // Check if data contains 'response' field
-            elseif (isset($data['response'])) {
-                $reply = is_string($data['response']) ? $data['response'] : json_encode($data['response']);
-            }
-            // If data itself is the answer (direct structure)
-            elseif (isset($data['intent']) && isset($data['answer'])) {
-                $reply = $data['answer'];
-            }
-            
-            // Fallback: if still null, try to extract from any field
-            if ($reply === null) {
-                // Try to find any text field
-                foreach (['answer', 'reply', 'response', 'message', 'text'] as $field) {
-                    if (isset($data[$field]) && is_string($data[$field])) {
-                        $reply = $data[$field];
-                        break;
-                    }
+                // Extract from Gemini response
+                if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+                    $reply = trim($data['candidates'][0]['content']['parts'][0]['text']);
+                    // Remove markdown formatting (** for bold)
+                    $reply = preg_replace('/\*\*(.*?)\*\*/', '$1', $reply); // Remove **bold**
+                    $reply = preg_replace('/\*(.*?)\*/', '$1', $reply); // Remove *italic*
                 }
             }
             
             // Final fallback
-            if ($reply === null || empty($reply)) {
-                $reply = 'Maaf, saya tidak dapat menjawab saat ini.';
-                Log::warning('AI Chat - Could not extract reply from response', [
-                    'data_keys' => array_keys($data),
-                    'data_preview' => Str::limit(json_encode($data), 200)
+            if (empty($reply)) {
+                $reply = $this->getFallbackResponse($question);
+                Log::warning('AI Chat - Using fallback response', [
+                    'question' => $question
                 ]);
-            }
-            
-            // Clean up reply - remove JSON formatting if it's still there
-            if (is_string($reply) && (strpos(trim($reply), '{"intent"') === 0 || strpos(trim($reply), '{"answer"') === 0)) {
-                $decoded = json_decode($reply, true);
-                if (json_last_error() === JSON_ERROR_NONE && isset($decoded['answer'])) {
-                    $reply = $decoded['answer'];
-                }
-            }
-            
-            // Remove markdown formatting (** for bold)
-            if (is_string($reply)) {
-                $reply = preg_replace('/\*\*(.*?)\*\*/', '$1', $reply); // Remove **bold**
-                $reply = preg_replace('/\*(.*?)\*/', '$1', $reply); // Remove *italic*
             }
             
             // Check if question is about "cara pemesanan" (how to order)
@@ -212,16 +163,42 @@ class UserAIChatController extends Controller
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             Log::error('AI chat connection error: ' . $e->getMessage());
             return response()->json([
-                'success' => false, 
-                'message' => 'Tidak dapat terhubung ke server AI. Silakan coba lagi nanti.'
-            ], 503);
+                'success' => true, 
+                'reply' => $this->getFallbackResponse($question),
+                'layanan' => [],
+                'umkm' => []
+            ]);
         } catch (\Throwable $e) {
             Log::error('AI chat error: ' . $e->getMessage());
             return response()->json([
-                'success' => false, 
-                'message' => 'Terjadi kesalahan. Silakan coba lagi.'
-            ], 500);
+                'success' => true, 
+                'reply' => $this->getFallbackResponse($question),
+                'layanan' => [],
+                'umkm' => []
+            ]);
         }
+    }
+
+    /**
+     * Get fallback response when AI fails
+     */
+    private function getFallbackResponse($userMessage)
+    {
+        $message = strtolower($userMessage);
+        
+        if (preg_match('/\b(rekomendasi|menu|makanan|minuman|lapar|haus)\b/i', $message)) {
+            return "Tentu! Berikut adalah beberapa rekomendasi menu dari UMKM kami yang bisa Anda coba:";
+        }
+        
+        if (preg_match('/\b(umkm|toko|daftar)\b/i', $message)) {
+            return "Berikut adalah daftar UMKM yang bergabung bersama kami:";
+        }
+        
+        if (preg_match('/\b(cara|pesan|beli|order)\b/i', $message)) {
+            return "Untuk memesan produk, Anda bisa masuk ke detail produk/layanan lalu menekan tombol 'Hubungi Penjual' atau memesan via e-commerce yang tersedia.";
+        }
+        
+        return "Halo! Saya adalah asisten AI UMKM.go. Saya dapat membantu memberikan rekomendasi menu atau daftar UMKM yang tersedia. Silakan tanyakan apa yang ingin Anda cari!";
     }
 
     /**
@@ -308,13 +285,25 @@ class UserAIChatController extends Controller
             // Build correction message for AI
             $correctionMessage = $this->buildCorrectionMessage($originalQuestion, $missingData, $databaseContext);
             
-            // Request AI again with correction
-            $response = Http::timeout(30)
-                ->post('https://ai-umkmm-go.sgp.dom.my.id/chat', [
-                    'question' => $correctionMessage,
-                    'database_context' => $databaseContext,
-                    'correction_mode' => true // Flag to indicate this is a correction request
-                ]);
+            // Request AI again with correction using Gemini API
+            $geminiApiKey = 'Set Api';
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . $geminiApiKey;
+
+            $response = Http::timeout(60)->post($url, [
+                'contents' => [
+                    [
+                        'parts' => [
+                            [
+                                'text' => $correctionMessage
+                            ]
+                        ]
+                    ]
+                ],
+                'generationConfig' => [
+                    'temperature' => 0.7,
+                    'maxOutputTokens' => 2048,
+                ]
+            ]);
 
             if ($response->failed()) {
                 Log::error('AI correction request failed: ' . $response->body());
@@ -322,7 +311,14 @@ class UserAIChatController extends Controller
             }
 
             $data = $response->json();
-            $correctedReply = $data['reply'] ?? $data['answer'] ?? $data['response'] ?? null;
+            $correctedReply = null;
+
+            if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+                $correctedReply = trim($data['candidates'][0]['content']['parts'][0]['text']);
+                // Clean markdown
+                $correctedReply = preg_replace('/\*\*(.*?)\*\*/', '$1', $correctedReply);
+                $correctedReply = preg_replace('/\*(.*?)\*/', '$1', $correctedReply);
+            }
             
             if ($correctedReply) {
                 Log::info('AI Chat - Correction successful', [

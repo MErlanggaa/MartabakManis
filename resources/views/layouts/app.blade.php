@@ -5,436 +5,392 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'UMKM Katalog')</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @yield('styles')
     <style>
-        /* Loading Screen Styles */
+        /* Premium Loading Screen Styles */
         #loading-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100vh;
-            background: linear-gradient(135deg, #ffffff 0%, #e0f7fa 100%);
+            background: #ffffff;
             z-index: 99999;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             opacity: 1;
-            transition: opacity 0.3s ease-out;
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), backdrop-filter 0.6s ease;
             overflow: hidden;
+            backdrop-filter: blur(10px);
         }
         
         #loading-screen.fade-out {
             opacity: 0;
             pointer-events: none;
+            backdrop-filter: blur(0px);
         }
         
         #loading-screen.hidden {
             display: none;
         }
         
+        .loading-logo-container {
+            position: relative;
+            margin-bottom: 2.5rem;
+        }
+
         .loading-logo {
-            width: 150px;
-            height: 150px;
-            animation: logoFloat 3s ease-in-out infinite;
-            filter: drop-shadow(0 10px 20px rgba(0, 155, 151, 0.3));
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            position: relative;
+            z-index: 2;
+            animation: premiumFloat 4s ease-in-out infinite;
+        }
+
+        .loading-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle, rgba(0, 150, 136, 0.2) 0%, rgba(0, 150, 136, 0) 70%);
+            z-index: 1;
+            border-radius: 50%;
+            animation: glowPulse 3s ease-in-out infinite;
         }
         
-        @keyframes logoFloat {
-            0%, 100% {
-                transform: translateY(0px) scale(1);
-            }
-            50% {
-                transform: translateY(-20px) scale(1.05);
-            }
+        @keyframes premiumFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+            50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
         }
         
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            margin-top: 30px;
+        .loading-bar-container {
+            width: 200px;
+            height: 4px;
+            background: #F1F5F9;
+            border-radius: 4px;
+            overflow: hidden;
             position: relative;
         }
         
-        .loading-spinner::before,
-        .loading-spinner::after {
-            content: '';
+        .loading-bar-progress {
             position: absolute;
-            border-radius: 50%;
-            border: 4px solid transparent;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, #009688, transparent);
+            animation: swipeProgress 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
         
-        .loading-spinner::before {
-            width: 60px;
-            height: 60px;
-            border-top-color: #009b97;
-            border-right-color: #009b97;
-            animation: spin 1s linear infinite;
-        }
-        
-        .loading-spinner::after {
-            width: 40px;
-            height: 40px;
-            top: 10px;
-            left: 10px;
-            border-bottom-color: #007a77;
-            border-left-color: #007a77;
-            animation: spinReverse 0.8s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-        
-        @keyframes spinReverse {
-            0% {
-                transform: rotate(360deg);
-            }
-            100% {
-                transform: rotate(0deg);
-            }
+        @keyframes swipeProgress {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
         
         .loading-text {
-            margin-top: 20px;
-            font-size: 18px;
-            font-weight: 600;
-            color: #009b97;
-            animation: pulse 1.5s ease-in-out infinite;
+            margin-top: 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            color: #64748B;
+            text-transform: uppercase;
         }
-        
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.6;
-            }
-        }
-        
-        .loading-dots {
-            display: inline-flex;
-            gap: 8px;
-            margin-top: 10px;
-        }
-        
-        .loading-dot {
-            width: 10px;
-            height: 10px;
-            background-color: #009b97;
+
+        /* Ambient floating particles */
+        .particle {
+            position: absolute;
+            background: rgba(0, 150, 136, 0.1);
             border-radius: 50%;
-            animation: dotBounce 1.4s ease-in-out infinite;
+            pointer-events: none;
+            animation: floatUp 8s linear infinite;
         }
-        
-        .loading-dot:nth-child(1) {
-            animation-delay: 0s;
+
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateY(-20vh) scale(1); opacity: 0; }
         }
-        
-        .loading-dot:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-        
-        .loading-dot:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-        
-        @keyframes dotBounce {
-            0%, 80%, 100% {
-                transform: translateY(0) scale(1);
-                opacity: 0.7;
-            }
-            40% {
-                transform: translateY(-15px) scale(1.2);
-                opacity: 1;
-            }
-        }
-        
-        /* Wave Animation Background - Removed to fix green color issue */
     </style>
 </head>
-<body class="bg-white min-h-screen flex flex-col">
-    <!-- Loading Screen -->
+<body class="bg-surface min-h-screen flex flex-col font-sans antialiased text-slate-800">
+    <!-- Premium Loading Screen -->
     <div id="loading-screen">
-        <img src="{{ asset('gambar/logo.jpeg') }}" alt="Logo UMKM" class="loading-logo object-contain">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Memuat UMKM.go</div>
-        <div class="loading-dots">
-            <div class="loading-dot"></div>
-            <div class="loading-dot"></div>
-            <div class="loading-dot"></div>
+        <!-- Ambient Particles generated via JS -->
+        <div id="particles-container"></div>
+        
+        <div class="loading-logo-container">
+            <div class="loading-glow"></div>
+            <img src="{{ asset('gambar/logo.jpeg') }}" alt="Logo UMKM" class="loading-logo">
         </div>
+        
+        <div class="loading-bar-container">
+            <div class="loading-bar-progress"></div>
+        </div>
+        
+        <div class="loading-text">Memuat UMKM.go</div>
     </div>
     @php 
-     $isAuthPage = in_array(request()->route()->getName(), ['login','register']);
+        $isAuthPage = in_array(request()->route()->getName(), ['login','register']);
+        $hasSidebar = auth()->check() && auth()->user()->role === 'umkm' && (
+            request()->routeIs('umkm.*') || 
+            request()->segment(1) === 'umkm'
+        );
     @endphp
 
-    @if(!$isAuthPage)
-    <!-- Header -->
-    <header class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center py-4">
-                <a href="{{ route('public.katalog') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                    <img src="{{ asset('gambar/logo.jpeg') }}" 
-                         alt="Logo UMKM" 
-                         class="h-10 w-auto md:h-12 object-contain">
-                        </a>
-                
-                <!-- Desktop Menu -->
-                <div class="hidden md:flex items-center gap-4">
-                    @auth
-                        @if(auth()->user()->role === 'admin')
-                            <a href="{{ route('public.katalog') }}" class="text-gray-700 hover:text-gray-900 transition-colors">
-                                <i class="fas fa-th-large"></i> Katalog
-                            </a>
-                            <a href="{{ route('admin.dashboard') }}" class="text-gray-700 hover:text-gray-900 transition-colors">
-                                <i class="fas fa-home"></i> Beranda
-                                </a>
-                        @elseif(auth()->user()->role === 'umkm')
-                            <a href="{{ route('public.katalog') }}" class="text-gray-700 hover:text-gray-900 transition-colors">
-                                <i class="fas fa-th-large"></i> Katalog
-                            </a>
-                            <a href="{{ route('umkm.dashboard') }}" class="text-gray-700 hover:text-gray-900 transition-colors">
-                                <i class="fas fa-home"></i> Beranda
-                            </a>
-                        @elseif(auth()->user()->role === 'user')
-                            <a href="{{ route('public.katalog') }}" class="text-gray-700 hover:text-gray-900 transition-colors">
-                                <i class="fas fa-th-large"></i> Katalog
-                            </a>
-                               <a href="{{ route('videos.index') }}" class="text-gray-700 hover:text-gray-900 transition-colors">
-                <i class="fas fa-play-circle text-xl mb-1"></i>
-                Video
-            </a>
-                          
-                        @else
-                            <a href="{{ route('public.katalog') }}" class="text-gray-700 hover:text-gray-900 transition-colors">
-                                <i class="fas fa-home"></i> Beranda
-                                </a>
-                            
-                        @endif
-                        
-                        <div class="relative group">
-                            <button class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2">
-                                <i class="fas fa-user"></i> {{ auth()->user()->name }}
-                                <i class="fas fa-chevron-down text-xs"></i>
-                            </button>
-                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                                @if(auth()->user()->role === 'user')
-                                    <a href="{{ route('user.account') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
-                                        <i class="fas fa-user-circle"></i> Detail Akun
-                                    </a>
-                                @elseif(auth()->user()->role === 'umkm')
-                                    <a href="{{ route('umkm.edit.account') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
-                                        <i class="fas fa-user-edit"></i> Edit Akun
-                                    </a>
-                                    <a href="{{ route('umkm.history.laporan') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
-                                        <i class="fas fa-history"></i> History Laporan
-                                    </a>
-                                @endif
-                                
-                                <form action="{{ route('logout') }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
-                                    <i class="fas fa-sign-out-alt"></i> Logout
-                                    </button>
-                                </form>
+    @if($hasSidebar)
+        <!-- Dashboard Layout with Sidebar -->
+        <div class="flex min-h-screen bg-slate-50">
+            <!-- Sidebar Root -->
+            <div id="umkm-sidebar-root" data-umkm-name="{{ auth()->user()->umkm?->nama ?? 'Dashboard UMKM' }}"></div>
+            @vite(['resources/js/umkm-dashboard-ui.jsx'])
+
+            <!-- Right Column -->
+            <div class="flex flex-col flex-1 min-h-screen min-w-0 transition-all duration-300 pl-0 lg:pl-64" id="main-content-layout">
+                <!-- Navbar -->
+                @if(!$isAuthPage)
+                @php
+                    $navLinks = [
+                        ['href' => route('public.katalog'), 'label' => 'Katalog', 'icon' => '🏪'],
+                    ];
+                    $navUserMenu = [
+                        ['href' => route('umkm.edit.account'), 'label' => '✏️ Edit Akun'],
+                        ['href' => route('umkm.history.laporan'), 'label' => '📋 History Laporan'],
+                    ];
+                    $navUser = ['name' => auth()->user()->name, 'menu' => $navUserMenu];
+                @endphp
+                <div id="navbar-root"
+                     data-user='@json($navUser)'
+                     data-links='@json($navLinks)'
+                     data-logo-url="{{ asset('gambar/logo.jpeg') }}"
+                     data-katalog-url="{{ route('public.katalog') }}"
+                     data-login-url="{{ route('login') }}"
+                     data-logout-url="{{ route('logout') }}"
+                     data-csrf-token="{{ csrf_token() }}">
+                </div>
+                @vite(['resources/js/navbar.jsx'])
+                @endif
+
+                <!-- Main Content Panel -->
+                <main class="flex-grow flex flex-col min-w-0">
+                    @if(session('success'))
+                        <div class="container mx-auto px-4 py-4">
+                            <div class="alert-success" role="alert">
+                                <i class="fas fa-check-circle text-brand-600 flex-shrink-0"></i>
+                                <span class="flex-1">{{ session('success') }}</span>
+                                <button onclick="this.closest('[role=alert]').style.opacity='0';setTimeout(()=>this.closest('[role=alert]').parentElement.remove(),200)" class="text-brand-600 hover:text-brand-800 transition-colors flex-shrink-0">
+                                    <i class="fas fa-times"></i>
+                                </button>
                             </div>
                         </div>
-                    @else
-                        <a href="{{ route('login') }}" class="bg-[#009b97] hover:bg-[#007a77] text-white px-6 py-2 rounded-lg transition-colors font-medium shadow-md hover:shadow-lg">
-                            Masuk/Daftar
-                        </a>
-                    @endauth
-                </div>
+                    @endif
 
-                <!-- Mobile Menu Button -->
-                <div class="md:hidden flex items-center">
-                    @auth
-                        @if(auth()->user()->role !== 'user' && auth()->user()->role !== 'umkm')
-                            <button id="mobile-menu-button" class="text-gray-700 hover:text-gray-900 focus:outline-none focus:text-gray-900 transition-colors p-2">
-                                <i class="fas fa-bars text-2xl"></i>
-                            </button>
-                        @endif
-                    @else
-                        <a href="{{ route('login') }}" class="bg-[#009b97] hover:bg-[#007a77] text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm mr-3 shadow-md hover:shadow-lg">
-                            Masuk
-                        </a>
-                        <button id="mobile-menu-button" class="text-gray-700 hover:text-gray-900 focus:outline-none focus:text-gray-900 transition-colors p-2">
-                            <i class="fas fa-bars text-2xl"></i>
+                    @if(session('error'))
+                        <div class="container mx-auto px-4 py-4">
+                            <div class="alert-error" role="alert">
+                                <i class="fas fa-exclamation-circle text-red-600 flex-shrink-0"></i>
+                                <span class="flex-1">{{ session('error') }}</span>
+                                <button onclick="this.closest('[role=alert]').style.opacity='0';setTimeout(()=>this.closest('[role=alert]').parentElement.remove(),200)" class="text-red-600 hover:text-red-800 transition-colors flex-shrink-0">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    @endif
+
+                    @yield('content')
+                </main>
+
+                <!-- Footer (Keeps at bottom) -->
+                @if(!$isAuthPage)
+                <footer class="mt-auto {{ auth()->check() && auth()->user()->role === 'umkm' ? 'pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-0' : '' }}">
+                    <!-- Footer Bagian Putih -->
+                    <div class="bg-white text-slate-700 py-12 border-t border-slate-100">
+                        <div class="container mx-auto px-4">
+                            <div class="flex flex-col md:flex-row justify-between gap-8">
+                                <div class="flex-1">
+                                    <div class="mb-4 flex items-center gap-2">
+                                        <img src="{{ asset('gambar/logo.jpeg') }}" alt="Logo UMKM" class="h-10 w-auto object-contain">
+                                        <span class="font-bold text-slate-900">UMKM<span class="text-brand-500">.go</span></span>
+                                    </div>
+                                    <p class="text-slate-500 text-sm leading-relaxed max-w-md">
+                                        Platform digital yang menghubungkan pelaku UMKM Indonesia dengan masyarakat — dari discovery, pemesanan, hingga pembayaran aman.
+                                    </p>
+                                </div>
+                                <div class="md:text-left">
+                                    <h4 class="font-bold text-brand-600 mb-4">Bantuan</h4>
+                                    <ul class="space-y-2">
+                                        <li><a href="#" class="text-slate-500 hover:text-brand-600 text-sm transition-colors">Privacy Policy</a></li>
+                                        <li><a href="#" class="text-slate-500 hover:text-brand-600 text-sm transition-colors">Terms and Condition</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Footer Bottom Bar -->
+                    <div class="bg-brand-800 text-white px-4 py-4">
+                        <div class="container mx-auto">
+                            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                <p class="text-white text-sm text-center md:text-right whitespace-nowrap">
+                                    © 2025 Martabak Manis | All Rights Reserved.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+                @endif
+            </div>
+        </div>
+    @else
+        <!-- Standard Layout (Full Width, No Sidebar) -->
+        @if(!$isAuthPage)
+        @php
+            $navLinks = [
+                ['href' => route('public.katalog'), 'label' => 'Katalog', 'icon' => '🏪'],
+            ];
+            $navUserMenu = [];
+            if (auth()->check()) {
+                $role = auth()->user()->role;
+                if ($role === 'admin') {
+                    $navLinks[] = ['href' => route('admin.dashboard'), 'label' => 'Dashboard', 'icon' => '📊'];
+                } elseif ($role === 'umkm') {
+                    $navLinks[] = ['href' => route('umkm.dashboard'), 'label' => 'Dashboard', 'icon' => '📊'];
+                } elseif ($role === 'user') {
+                    $navLinks[] = ['href' => route('videos.index'), 'label' => 'Video', 'icon' => '🎬'];
+                    $navLinks[] = ['href' => route('user.ai.chat'), 'label' => 'AI Chat', 'icon' => '🤖'];
+                }
+                if ($role === 'user') {
+                    $navUserMenu[] = ['href' => route('user.account'), 'label' => '👤 Detail Akun'];
+                    $navUserMenu[] = ['href' => route('user.history.laporan'), 'label' => '📋 History Laporan'];
+                } elseif ($role === 'umkm') {
+                    $navUserMenu[] = ['href' => route('umkm.edit.account'), 'label' => '✏️ Edit Akun'];
+                    $navUserMenu[] = ['href' => route('umkm.history.laporan'), 'label' => '📋 History Laporan'];
+                }
+            }
+            $navUser = auth()->check() ? ['name' => auth()->user()->name, 'menu' => $navUserMenu] : null;
+        @endphp
+        <div id="navbar-root"
+             data-user='@json($navUser)'
+             data-links='@json($navLinks)'
+             data-logo-url="{{ asset('gambar/logo.jpeg') }}"
+             data-katalog-url="{{ route('public.katalog') }}"
+             data-login-url="{{ route('login') }}"
+             data-logout-url="{{ route('logout') }}"
+             data-csrf-token="{{ csrf_token() }}">
+        </div>
+        @vite(['resources/js/navbar.jsx'])
+        @endif
+
+        <main class="flex-grow">
+            @if(session('success'))
+                <div class="container mx-auto px-4 py-4">
+                    <div class="alert-success" role="alert">
+                        <i class="fas fa-check-circle text-brand-600 flex-shrink-0"></i>
+                        <span class="flex-1">{{ session('success') }}</span>
+                        <button onclick="this.closest('[role=alert]').style.opacity='0';setTimeout(()=>this.closest('[role=alert]').parentElement.remove(),200)" class="text-brand-600 hover:text-brand-800 transition-colors flex-shrink-0">
+                            <i class="fas fa-times"></i>
                         </button>
-                    @endauth
+                    </div>
                 </div>
-            </div>
+            @endif
 
-            <!-- Mobile Menu Dropdown -->
-            <div id="mobile-menu" class="hidden md:hidden pb-4 border-t border-gray-200 mt-4">
-                <div class="flex flex-col gap-4 pt-4">
-                    @auth
-                        @if(auth()->user()->role === 'admin')
-                            <a href="{{ route('public.katalog') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
-                                <i class="fas fa-th-large"></i> Katalog
-                            </a>
-                            <a href="{{ route('admin.dashboard') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
-                                <i class="fas fa-home"></i> Beranda
-                            </a>
-                        @elseif(auth()->user()->role === 'umkm')
-                            <a href="{{ route('public.katalog') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
-                                <i class="fas fa-th-large"></i> Katalog
-                            </a>
-                            <a href="{{ route('umkm.dashboard') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
-                                <i class="fas fa-home"></i> Beranda
-                            </a>
-                        @else
-                            <!-- <a href="{{ route('public.katalog') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
-                                <i class="fas fa-home"></i> Beranda
-                            </a> -->
-                        @endif
-                        
-                        @if(auth()->user()->role === 'user')
-                            <!-- <a href="{{ route('user.edit.profile') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
-                                <i class="fas fa-user-edit"></i> Edit Profil
-                            </a> -->
-                            <a href="{{ route('user.history.laporan') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
-                                <i class="fas fa-history"></i> History Laporan
-                            </a>
-                        @elseif(auth()->user()->role === 'umkm')
-                            <a href="{{ route('umkm.edit.account') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
-                                <i class="fas fa-user-edit"></i> Edit Akun
-                            </a>
-                            <a href="{{ route('umkm.history.laporan') }}" class="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
-                                <i class="fas fa-history"></i> History Laporan
-                            </a>
-                        @endif
-                        
-                        <div class="flex items-center gap-2 py-2 text-gray-700">
-                            <i class="fas fa-user"></i> {{ auth()->user()->name }}
-                        </div>
-                        
-                        <form action="{{ route('logout') }}" method="POST">
-                            @csrf
-                            <button type="submit" class="w-full text-left text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 py-2">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </button>
-                        </form>
-                    @else
-                        <a href="{{ route('login') }}" class="bg-[#009b97] hover:bg-[#007a77] text-white px-6 py-2 rounded-lg transition-colors font-medium text-center shadow-md hover:shadow-lg">
-                            Masuk/Daftar
-                        </a>
-                    @endauth
+            @if(session('error'))
+                <div class="container mx-auto px-4 py-4">
+                    <div class="alert-error" role="alert">
+                        <i class="fas fa-exclamation-circle text-red-600 flex-shrink-0"></i>
+                        <span class="flex-1">{{ session('error') }}</span>
+                        <button onclick="this.closest('[role=alert]').style.opacity='0';setTimeout(()=>this.closest('[role=alert]').parentElement.remove(),200)" class="text-red-600 hover:text-red-800 transition-colors flex-shrink-0">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </header>
-    @endif
-    <main class="flex-grow">
-        @if(session('success'))
-            <div class="container mx-auto px-4 py-4">
-                <div class="bg-[#e6f5f4] border-l-4 border-[#009b97] text-gray-800 px-4 py-3 rounded mb-4" role="alert">
-                <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-check-circle text-[#009b97]"></i>
-                    <span>{{ session('success') }}</span>
+            @endif
+
+            @yield('content')
+        </main>
+
+        <!-- Footer -->
+        @if(!$isAuthPage)
+        <footer class="mt-auto {{ auth()->check() && in_array(auth()->user()->role, ['user','umkm']) ? 'pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-0' : '' }}">
+            <!-- Footer Bagian Putih -->
+            <div class="bg-white text-slate-700 py-12 border-t border-slate-100">
+                <div class="container mx-auto px-4">
+                    <div class="flex flex-col md:flex-row justify-between gap-8">
+                        <div class="flex-1">
+                            <div class="mb-4 flex items-center gap-2">
+                                <img src="{{ asset('gambar/logo.jpeg') }}" alt="Logo UMKM" class="h-10 w-auto object-contain">
+                                <span class="font-bold text-slate-900">UMKM<span class="text-brand-500">.go</span></span>
+                            </div>
+                            <p class="text-slate-500 text-sm leading-relaxed mb-6 max-w-md">
+                                Platform digital yang menghubungkan pelaku UMKM Indonesia dengan masyarakat — dari discovery, pemesanan, hingga pembayaran aman.
+                            </p>
+                            <div class="space-y-3">
+                                <div class="flex items-center gap-3 text-gray-700">
+                                    <i class="fas fa-phone text-brand-600"></i>
+                                    <span class="text-sm">umkm.go</span>
+                                </div>
+                                <div class="flex items-center gap-3 text-gray-700">
+                                    <i class="fas fa-envelope text-brand-600"></i>
+                                    <span class="text-sm">umkm.go</span>
+                                </div>
+                            </div>
                         </div>
-                        <button onclick="this.parentElement.parentElement.remove()" class="text-gray-600 hover:text-gray-800 transition-colors">
-                        <i class="fas fa-times"></i>
-                    </button>
+
+                        <!-- Bantuan - Posisi Kanan -->
+                        <div class="md:text-left">
+                            <h4 class="font-bold text-brand-600 mb-4">Bantuan</h4>
+                            <ul class="space-y-2">
+                                @if(auth()->check() && auth()->user()->role !== 'admin')
+                                    <li><a href="{{ route('public.laporan') }}" class="text-slate-500 hover:text-brand-600 text-sm transition-colors">Laporan</a></li>
+                                @elseif(!auth()->check())
+                                    <li><a href="{{ route('public.laporan') }}" class="text-slate-500 hover:text-brand-600 text-sm transition-colors">Laporan</a></li>
+                                @endif
+                                <li><a href="#" class="text-slate-500 hover:text-brand-600 text-sm transition-colors">Privacy Policy</a></li>
+                                <li><a href="#" class="text-slate-500 hover:text-brand-600 text-sm transition-colors">Terms and Condition</a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
-        @endif
 
-        @if(session('error'))
-            <div class="container mx-auto px-4 py-4">
-            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded mb-4" role="alert">
-                <div class="flex items-center justify-between">
-                    <span>{{ session('error') }}</span>
-                    <button onclick="this.parentElement.parentElement.remove()" class="text-red-700 hover:text-red-900">
-                        <i class="fas fa-times"></i>
-                    </button>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        @yield('content')
-    </main>
-
-    <!-- Footer -->
-    @if(!$isAuthPage)
-<footer class="mt-auto {{ auth()->check() && in_array(auth()->user()->role, ['user','umkm']) ? 'pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-0' : '' }}">
-        <!-- Footer Bagian Putih -->
-        <div class="bg-white text-gray-800 py-12 border-t-2 border-gray-200 shadow-lg">
-            <div class="container mx-auto px-4">
-                <div class="flex flex-col md:flex-row justify-between gap-8">
-                    <!-- Logo & Deskripsi -->
-                    <div class="flex-1">
-                        <div class="mb-4">
-                            <img src="{{ asset('gambar/logo.jpeg') }}" 
-                                 alt="Logo UMKM" 
-                                 class="h-10 w-auto md:h-12 object-contain">
+            <!-- Footer Bottom Bar -->
+            <div class="bg-brand-800 text-white px-4 py-4">
+                <div class="container mx-auto">
+                    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div class="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="YouTube"><i class="fab fa-youtube text-2xl"></i></a>
+                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="WhatsApp"><i class="fab fa-whatsapp text-2xl"></i></a>
+                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Facebook"><i class="fab fa-facebook text-2xl"></i></a>
+                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="LinkedIn"><i class="fab fa-linkedin text-2xl"></i></a>
+                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Instagram"><i class="fab fa-instagram text-2xl"></i></a>
+                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Twitter"><i class="fab fa-twitter text-2xl"></i></a>
                         </div>
-                        <p class="text-gray-600 text-sm leading-relaxed mb-6">
-                            Kami Mendukung Penuh Kepada Pelaku Usaha Mikro, Kecil, dan Menengah Indonesia.<br> Kami hadir untuk membantu pengguna untuk menemukan UMKM terdekat                
+
+                        <p class="text-white text-sm text-center md:text-right whitespace-nowrap">
+                            © 2025 Martabak Manis | All Rights Reserved.
                         </p>
-                        <div class="space-y-3">
-                            <div class="flex items-center gap-3 text-gray-700">
-                                <i class="fas fa-phone text-[#009b97]"></i>
-                                <span class="text-sm">umkm.go</span>
-                            </div>
-                            <div class="flex items-center gap-3 text-gray-700">
-                                <i class="fas fa-envelope text-[#009b97]"></i>
-                                <span class="text-sm">umkm.go</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Bantuan - Posisi Kanan -->
-                    <div class="md:text-left">
-                        <h4 class="font-bold text-[#009b97] mb-4">Bantuan</h4>
-                        <ul class="space-y-2">
-                            @if(auth()->check() && auth()->user()->role !== 'admin')
-                                <li><a href="{{ route('public.laporan') }}" class="text-gray-600 hover:text-[#009b97] text-sm transition-colors">Laporan</a></li>
-                            @elseif(!auth()->check())
-                                <li><a href="{{ route('public.laporan') }}" class="text-gray-600 hover:text-[#009b97] text-sm transition-colors">Laporan</a></li>
-                            @endif
-                            <li><a href="#" class="text-gray-600 hover:text-[#009b97] text-sm transition-colors">Privacy Policy</a></li>
-                            <li><a href="#" class="text-gray-600 hover:text-[#009b97] text-sm transition-colors">Terms and Condition</a></li>
-                        </ul>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Footer Bagian Hijau -->
-<div class="bg-[#218689] text-white px-4 py-4">
-    <div class="container mx-auto">
-        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div class="flex flex-wrap items-center justify-center md:justify-start gap-4">
-                <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="YouTube"><i class="fab fa-youtube text-2xl"></i></a>
-                <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="WhatsApp"><i class="fab fa-whatsapp text-2xl"></i></a>
-                <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Facebook"><i class="fab fa-facebook text-2xl"></i></a>
-                <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="LinkedIn"><i class="fab fa-linkedin text-2xl"></i></a>
-                <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Instagram"><i class="fab fa-instagram text-2xl"></i></a>
-                <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Twitter"><i class="fab fa-twitter text-2xl"></i></a>
-            </div>
-
-            <p class="text-white text-sm text-center md:text-right whitespace-nowrap">
-                © 2025 Martabak Manis | All Rights Reserved.
-            </p>
-        </div>
-    </div>
-</div>
-
-    </footer>
+        </footer>
+        @endif
     @endif
     @if(auth()->check() && in_array(auth()->user()->role, ['user','umkm']))
     <div class="h-16 md:hidden"></div>
@@ -444,10 +400,33 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Loading Screen Script - Hanya untuk transisi perpindahan halaman -->
+    <!-- Loading Screen Script -->
     <script>
         (function() {
             const loadingScreen = document.getElementById('loading-screen');
+            const particlesContainer = document.getElementById('particles-container');
+            
+            // Create ambient particles
+            function createParticles() {
+                if (!particlesContainer) return;
+                particlesContainer.innerHTML = '';
+                const count = window.innerWidth < 768 ? 10 : 20;
+                for (let i = 0; i < count; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    
+                    const size = Math.random() * 60 + 20;
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    
+                    particle.style.left = `${Math.random() * 100}%`;
+                    particle.style.animationDelay = `${Math.random() * 8}s`;
+                    particle.style.animationDuration = `${Math.random() * 4 + 6}s`;
+                    
+                    particlesContainer.appendChild(particle);
+                }
+            }
+            createParticles();
             
             // Function to show loading screen
             function showLoading() {

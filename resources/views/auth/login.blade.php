@@ -37,7 +37,7 @@
                            required
                            autocomplete="email"
                            autofocus
-                           class="appearance-none relative block w-full px-4 py-3 border @error('email') border-red-300 @else border-gray-300 @enderror placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                           class="input-modern @error('email') border-red-300 focus:border-red-500 focus:ring-red-500/20 @enderror"
                            placeholder="nama@email.com">
                     @error('email')
                         <p class="mt-2 text-sm text-red-600 flex items-center">
@@ -58,11 +58,11 @@
                                name="password" 
                                required
                                autocomplete="current-password"
-                               class="appearance-none relative block w-full px-4 py-3 border @error('password') border-red-300 @else border-gray-300 @enderror placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all pr-12"
+                               class="input-modern pr-12 @error('password') border-red-300 focus:border-red-500 focus:ring-red-500/20 @enderror"
                                placeholder="Masukkan password">
                         <button type="button" 
                                 onclick="togglePassword()"
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
                             <i class="fas fa-eye" id="password-toggle-icon"></i>
                         </button>
                     </div>
@@ -95,10 +95,8 @@
                 <!-- Submit Button -->
                 <div>
                     <button type="submit" 
-                            class="group relative w-full flex justify-center items-center py-3 px-4 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                        <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                            <i class="fas fa-sign-in-alt text-purple-200"></i>
-                        </span>
+                            class="btn-primary w-full">
+                        <i class="fas fa-sign-in-alt text-brand-100 mr-1"></i>
                         Masuk
                     </button>
                 </div>
@@ -118,9 +116,9 @@
 
             <!-- Register Link -->
             <div class="mt-6 text-center">
-                <p class="text-sm text-gray-600">
+                <p class="text-sm text-slate-600">
                     Belum punya akun?
-                    <a href="{{ route('register') }}" class="font-medium text-purple-600 hover:text-purple-500 transition-colors">
+                    <a href="{{ route('register') }}" class="font-medium text-brand-600 hover:text-brand-700 transition-colors">
                         Daftar di sini
                     </a>
                 </p>
@@ -129,7 +127,7 @@
 
         <!-- Back to Home -->
         <div class="text-center">
-            <a href="{{ route('public.katalog') }}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors">
+            <a href="{{ route('home') }}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors">
                 <i class="fas fa-arrow-left mr-2"></i>
                 Kembali ke beranda
             </a>

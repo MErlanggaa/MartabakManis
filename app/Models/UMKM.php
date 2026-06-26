@@ -75,4 +75,9 @@ class UMKM extends Model
     {
         return $this->belongsToMany(User::class, 'followers', 'umkm_id', 'user_id')->withTimestamps();
     }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'umkm_id');
+    }
 }

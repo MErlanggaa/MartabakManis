@@ -14,11 +14,11 @@
     </nav>
 
     <!-- Main Product Display -->
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+    <div class="card-modern mb-8 overflow-hidden">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 lg:p-8">
             <!-- Product Image Section -->
             <div class="relative w-full">
-                <div class="relative w-full h-96 lg:h-[500px] bg-gray-100 rounded-lg overflow-hidden shadow-inner">
+                <div class="relative w-full h-96 lg:h-[500px] bg-slate-50 rounded-2xl overflow-hidden shadow-inner">
                     @if($layanan->photo_path)
                         <img src="{{ asset('storage/' . $layanan->photo_path) }}" 
                              alt="{{ $layanan->nama }}" 
@@ -31,7 +31,7 @@
                     
                     <!-- Category Badge (Top Left) -->
                     @if($umkm && $umkm->jenis_umkm)
-                        <span class="absolute top-4 left-4 bg-white text-black text-sm font-semibold px-4 py-2 rounded-full shadow-lg">
+                        <span class="absolute top-4 left-4 bg-white/95 text-slate-800 text-sm font-bold px-4 py-1.5 rounded-full shadow-soft backdrop-blur-md">
                             {{ $umkm->jenis_umkm }}
                         </span>
                     @endif
@@ -45,7 +45,7 @@
                         @endphp
                         @if($umkmId)
                             <button type="button" 
-                                    class="favorite-btn absolute top-4 right-4 z-10 p-3 rounded-full bg-white shadow-lg hover:bg-red-50 transition-all duration-200 {{ $isFav ? 'text-red-600' : 'text-gray-400' }} hover:scale-110"
+                                    class="favorite-btn absolute top-4 right-4 z-10 p-3 rounded-full bg-white/90 shadow-soft backdrop-blur-md hover:bg-red-50 transition-all duration-200 {{ $isFav ? 'text-red-500' : 'text-slate-400' }} hover:scale-110"
                                     data-umkm-id="{{ $umkmId }}"
                                     data-umkm-nama="{{ $umkm->nama ?? '' }}"
                                     onclick="toggleFavoriteWithAlert({{ $umkmId }}, this, '{{ $umkm->nama ?? '' }}')"
@@ -79,8 +79,8 @@
                         <p class="text-3xl lg:text-4xl font-bold text-black mb-2">
                             Rp {{ number_format($layanan->price, 0, ',', '.') }}
                         </p>
-                        <div class="flex items-center gap-4 text-sm text-gray-600">
-                            <span class="inline-flex items-center gap-1.5 text-[#009b97]">
+                        <div class="flex items-center gap-4 text-sm text-slate-600">
+                            <span class="inline-flex items-center gap-1.5 text-brand-600">
                                 <i class="fas fa-eye"></i>
                                 <span class="font-medium">{{ number_format($layanan->views ?? 0, 0, ',', '.') }} Dilihat</span>
                             </span>
@@ -120,12 +120,12 @@
                             <a href="https://wa.me/{{ $no_wa_clean }}?text={{ $message }}" 
                                target="_blank" 
                                data-no-loading="true"
-                               class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-300 flex items-center justify-center gap-3 shadow-md hover:shadow-lg">
+                               class="flex-1 btn-primary py-3.5 px-6 rounded-xl flex items-center justify-center gap-3 w-full">
                                 <i class="fab fa-whatsapp text-2xl"></i>
                                 <span>Hubungi Penjual</span>
                             </a>
                         @else
-                            <button disabled class="flex-1 bg-gray-300 text-gray-500 font-bold py-4 px-6 rounded-lg cursor-not-allowed flex items-center justify-center gap-3" title="Nomor WhatsApp tidak tersedia">
+                            <button disabled class="flex-1 bg-slate-200 text-slate-400 font-bold py-3.5 px-6 rounded-xl cursor-not-allowed flex items-center justify-center gap-3" title="Nomor WhatsApp tidak tersedia">
                                 <i class="fab fa-whatsapp text-2xl"></i>
                                 <span>Hubungi Penjual</span>
                             </button>
@@ -133,7 +133,7 @@
                         
                         <button type="button" 
                                 onclick="shareProduct()"
-                                class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-4 px-6 rounded-lg transition-colors duration-300 flex items-center justify-center gap-3 shadow-md hover:shadow-lg">
+                                class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3.5 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 shadow-soft hover:shadow-card w-full">
                             <i class="fas fa-share-alt text-xl"></i>
                             <span>Bagikan</span>
                         </button>
@@ -192,6 +192,14 @@
                             </button>
                         @endif
                     </div>
+                </div>
+
+                <!-- React Checkout -->
+                <div class="mt-8" id="checkout-root"
+                     data-layanan='@json(["id" => $layanan->id, "nama" => $layanan->nama, "price" => $layanan->price])'
+                     data-umkm='@json(["id" => $umkm->id, "nama" => $umkm->nama])'
+                     data-user='@json(auth()->check() ? ["name" => auth()->user()->name] : null)'
+                     data-authenticated="{{ auth()->check() ? 'true' : 'false' }}">
                 </div>
 
                 <!-- Seller Info -->
@@ -531,6 +539,11 @@
 @endsection
 
 @section('scripts')
+@php $midtransClientKey = config('services.midtrans.client_key'); @endphp
+@if($midtransClientKey)
+<script src="{{ config('services.midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}" data-client-key="{{ $midtransClientKey }}"></script>
+@endif
+@vite(['resources/js/checkout.jsx'])
 <script>
     async function toggleFavoriteWithAlert(umkmId, button, umkmNama) {
         const icon = button.querySelector('i');

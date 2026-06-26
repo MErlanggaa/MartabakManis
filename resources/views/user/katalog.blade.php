@@ -94,77 +94,41 @@
 @endsection
 
 @section('content')
-<!-- Hero Carousel - Full Width dengan Foto (Mentok ke Navbar) -->
-<div class="w-full relative">
-    <!-- Hero Carousel Container -->
-    <div class="relative w-full h-[250px] md:h-[300px] lg:h-[800px] overflow-hidden group">
-        <!-- Carousel Slides -->
-        <div class="relative w-full h-full" id="heroCarousel">
-            <!-- Slide 1 -->
-            <div class="carousel-slide absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out opacity-100" data-slide="0">
-                <img src="{{ asset('gambar/1.jpg') }}" 
-                     alt="Hero Image 1" 
-                     class="w-full h-full object-cover"
-                     loading="eager">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
-            </div>
-            
-            <!-- Slide 2 -->
-            <div class="carousel-slide absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out opacity-0" data-slide="1">
-                <img src="{{ asset('gambar/2.jpg') }}" 
-                     alt="Hero Image 2" 
-                     class="w-full h-full object-cover"
-                     loading="lazy">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
-            </div>
-            
-            <!-- Slide 3 -->
-            <div class="carousel-slide absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out opacity-0" data-slide="2">
-                <img src="{{ asset('gambar/3.jpg') }}" 
-                     alt="Hero Image 3" 
-                     class="w-full h-full object-cover"
-                     loading="lazy">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
-            </div>
-        </div>
-        
-        <!-- Navigation Buttons -->
-        <button onclick="changeSlide(-1)" 
-                class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 opacity-0 group-hover:opacity-100 z-10"
-                id="prevBtn"
-                aria-label="Previous slide">
-            <i class="fas fa-chevron-left text-xl"></i>
-        </button>
-        
-        <button onclick="changeSlide(1)" 
-                class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 opacity-0 group-hover:opacity-100 z-10"
-                id="nextBtn"
-                aria-label="Next slide">
-            <i class="fas fa-chevron-right text-xl"></i>
-        </button>
-        
-        <!-- Dots Indicator -->
-        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-            <button onclick="goToSlide(0)" 
-                    class="w-3 h-3 rounded-full bg-white/80 hover:bg-white transition-all duration-300 carousel-dot active" 
-                    data-dot="0"
-                    aria-label="Go to slide 1"></button>
-            <button onclick="goToSlide(1)" 
-                    class="w-3 h-3 rounded-full bg-white/80 hover:bg-white transition-all duration-300 carousel-dot" 
-                    data-dot="1"
-                    aria-label="Go to slide 2"></button>
-            <button onclick="goToSlide(2)" 
-                    class="w-3 h-3 rounded-full bg-white/80 hover:bg-white transition-all duration-300 carousel-dot" 
-                    data-dot="2"
-                    aria-label="Go to slide 3"></button>
-        </div>
-    </div>
-</div>
+@php
+    use App\Models\UMKM;
+    use App\Models\User as PlatformUser;
+    use App\Models\Layanan as PlatformLayanan;
+    use App\Models\Order;
 
-<!-- Search Bar dan Filters - Card di atas dengan posisi naik (overlapping hero) -->
-<div class="max-w-7xl mx-auto px-4 -mt-12 md:-mt-16 lg:-mt-20 relative z-20 mb-8">
-    <!-- Search Bar dan Filters - Dalam satu card -->
-    <div class="bg-white rounded-xl shadow-xl p-4 md:p-6">
+    $platformStats = [
+        ['key' => 'umkm', 'label' => 'UMKM Terdaftar', 'value' => number_format(UMKM::count())],
+        ['key' => 'products', 'label' => 'Produk & Layanan', 'value' => number_format(PlatformLayanan::count())],
+        ['key' => 'users', 'label' => 'Pengguna Aktif', 'value' => number_format(PlatformUser::where('role', 'user')->count())],
+        ['key' => 'orders', 'label' => 'Pesanan Selesai', 'value' => number_format(Order::where('payment_status', 'paid')->count())],
+    ];
+
+    $userFavoritesGlobal = auth()->check() ? (auth()->user()->favorites ?? []) : [];
+    $productsForReact = $layanan->map(function ($item) use ($userFavoritesGlobal) {
+        $umkm = $item->umkm->first();
+        return [
+            'id' => $item->id,
+            'nama' => $item->nama,
+            'price' => (float) $item->price,
+            'photo_url' => $item->photo_path ? asset('storage/' . $item->photo_path) : null,
+            'umkm_name' => $umkm?->nama,
+            'category' => $umkm?->jenis_umkm,
+            'rating' => (float) ($item->rating_layanan ?? 0),
+            'url' => route('public.layanan.show', $item->id),
+            'is_favorite' => $umkm && in_array($umkm->id, $userFavoritesGlobal),
+        ];
+    })->values();
+@endphp
+
+
+
+<!-- Search Bar dan Filters -->
+<div class="max-w-7xl mx-auto px-4 mt-8 relative z-20 mb-8">
+    <div class="card-modern p-4 md:p-6">
         <form method="GET" action="{{ route('public.katalog') }}" id="filterForm" class="space-y-4">
             <!-- Search Bar -->
             <div class="mb-6">
@@ -180,9 +144,9 @@
                                id="search_input"
                            value="{{ request('search') }}" 
                                placeholder="Cari produk, layanan, atau UMKM..." 
-                               class="w-full pl-12 pr-4 py-3.5 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#009b97] focus:border-[#009b97] text-gray-700 transition-all shadow-sm hover:shadow-md">
+                               class="input-modern !pl-12">
                 </div>
-                    <button type="submit" class="bg-[#218689] hover:from-[#007a77] hover:to-[#005d5a] text-white px-8 py-3.5 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 whitespace-nowrap transform hover:scale-105">
+                    <button type="submit" class="btn-primary whitespace-nowrap">
                         <span>Telusuri</span>
                         <i class="fas fa-arrow-right"></i>
                 </button>
@@ -191,7 +155,7 @@
 
             <div class="mb-4 pb-4 border-b border-gray-200">
                 <p class="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                    <span class="text-xl">🔥</span>
+                    <i class="fas fa-fire text-orange-500 text-xl"></i>
                     <span>Fitur Rekomendasi untuk Anda</span>
                 </p>
             </div>
@@ -340,193 +304,21 @@
         </div>
     </div>
 
-    <!-- Results Count & Header -->
-    @if($layanan->count() > 0)
-    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-200">
-        <div>
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-1">Daftar Produk & Layanan</h2>
-            <p class="text-gray-600 text-sm md:text-base">
-                Menampilkan <span class="font-bold text-[#009b97]">{{ $layanan->count() }}</span> 
-                dari <span class="font-bold text-gray-900">{{ $layanan->total() }}</span> hasil
-            </p>
-        </div>
-        @if(request('search') || request('favorite') || request('distance'))
-        <a href="{{ route('public.katalog') }}" 
-           class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-[#009b97] transition-colors px-4 py-2 rounded-lg hover:bg-[#e6f5f4] border border-gray-200 hover:border-[#009b97]/30">
-            <i class="fas fa-times"></i>
-            <span>Hapus Filter</span>
+    @if(request('search') || request('favorite') || request('distance'))
+    <div class="mb-6 flex justify-end">
+        <a href="{{ route('public.katalog') }}" class="btn-secondary !py-2 !text-sm">
+            <i class="fas fa-times"></i> Hapus Filter
         </a>
-        @endif
     </div>
     @endif
 
-    <!-- Products Grid -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 lg:gap-6">
-        @forelse($layanan as $item)
-            @php
-                $umkm = $item->umkm->first();
-                $userFavorites = auth()->check() ? (auth()->user()->favorites ?? []) : [];
-                $isFavorite = $umkm && auth()->check() && in_array($umkm->id, $userFavorites);
-            @endphp
-            <div class="bg-white rounded-lg md:rounded-2xl shadow-sm md:shadow-lg hover:shadow-md md:hover:shadow-2xl transition-all duration-300 border border-gray-100 group cursor-pointer overflow-hidden transform hover:-translate-y-1" 
-                 onclick="window.location.href='{{ route('public.layanan.show', $item->id) }}'">
-                <!-- Product Image -->
-                <div class="relative w-full h-32 md:h-48 lg:h-56 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
-                    @if($item->photo_path)
-                        <img src="{{ asset('storage/' . $item->photo_path) }}" 
-                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                             alt="{{ $item->nama }}">
-                    @else
-                        <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#e6f5f4] to-gray-50">
-                            <i class="fas fa-image text-3xl md:text-6xl text-gray-300"></i>
-                        </div>
-                    @endif
-                    
-                    <!-- Gradient Overlay on Hover -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    
-                    <!-- Category Badge (Top Left) - Hidden on mobile, shown on md+ -->
-                    @if($umkm)
-                        <div class="absolute top-2 left-2 md:top-4 md:left-4 z-10 hidden md:block">
-                            <span class="bg-white/95 backdrop-blur-sm text-gray-800 text-xs font-bold px-2 md:px-3 py-1 md:py-1.5 rounded-full shadow-lg border border-gray-200">
-                                <i class="fas fa-tag mr-1 text-[#009b97]"></i>
-                                <span class="hidden lg:inline">{{ $umkm->jenis_umkm }}</span>
-                            </span>
-                        </div>
-                    @endif
-                    
-                    <!-- Favorite Button (Top Right) -->
-                    @auth
-                    @if($umkm)
-                    <button onclick="event.stopPropagation(); toggleFavoriteWithAlert({{ $umkm->id }}, this, '{{ addslashes($umkm->nama) }}');" 
-                            class="absolute top-2 right-2 md:top-4 md:right-4 z-10 favorite-btn p-2 md:p-2.5 rounded-full bg-white/95 backdrop-blur-sm shadow-lg hover:bg-white transition-all duration-300 hover:scale-110 {{ $isFavorite ? 'text-red-600' : 'text-gray-400' }}"
-                            data-umkm-id="{{ $umkm->id }}"
-                            data-umkm-nama="{{ $umkm->nama }}">
-                        <i class="{{ $isFavorite ? 'fas' : 'far' }} fa-heart text-sm md:text-lg"></i>
-                    </button>
-                    @endif
-                    @endauth
-                </div>
-                
-                <!-- Content -->
-                   <div class="p-3 md:p-4 lg:p-5">
-                    <!-- Product Name -->
-                    <h3 class="text-sm md:text-base lg:text-lg font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-[#009b97] transition-colors leading-tight">
-                            {{ Str::limit($item->nama,  20, '...') }}
-                    </h3>
-                    
-                    <!-- Rating Layanan -->
-                    @if(isset($item->rating_layanan) && $item->rating_layanan > 0)
-                        <div class="flex items-center gap-1 mb-1">
-                            <div class="flex items-center">
-                                @for($i = 1; $i <= 5; $i++)
-                                    <i class="fas fa-star text-[10px] md:text-xs {{ $i <= round($item->rating_layanan) ? 'text-yellow-400' : 'text-gray-300' }}"></i>
-                                @endfor
-                            </div>
-                            <span class="text-[10px] md:text-xs text-gray-600 font-medium">{{ number_format($item->rating_layanan, 1) }}</span>
-                        </div>
-                    @endif
-                    
-                    <!-- Description - Shown on all devices with truncate -->
-                    @if($item->description)
-                        <p class="text-gray-600 text-xs md:text-sm mb-2 md:mb-4 line-clamp-2 leading-relaxed">
-                            {{ Str::limit($item->description, 60, '...') }}
-                        </p>
-                    @endif
-                    
-                    <!-- Price -->
-                    <div class="mb-2 md:mb-4 pb-2 md:pb-4 border-b border-gray-100">
-                        <div class="flex items-baseline gap-2">
-                            <span class="text-base md:text-xl lg:text-2xl font-bold text-black">
-                            Rp {{ number_format($item->price, 0, ',', '.') }}
-                        </span>
-                        </div>
-                    </div>
-                    
-                    <!-- UMKM Name & Location - Simplified on mobile -->
-                    @if($umkm)
-                        <div class="mb-2 md:mb-4 space-y-1 md:space-y-2">
-                            <!-- UMKM Name -->
-                            <div class="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm">
-                                <div class="w-5 h-5 md:w-6 md:h-6 rounded-full bg-[#218689]  flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-store text-white text-[10px] md:text-xs"></i>
-                                </div>
-                                <span class="font-semibold text-gray-800 truncate text-xs md:text-sm">{{ $umkm->nama }}</span>
-                        </div>
-                        
-                            <!-- Rating Toko - Above Location -->
-                            @if(isset($item->rating_umkm) && $item->rating_umkm > 0)
-                                <div class="flex items-center gap-1.5 text-[10px] md:text-xs">
-                                    <div class="flex items-center">
-                                        @for($i = 1; $i <= 5; $i++)
-                                            <i class="fas fa-star {{ $i <= round($item->rating_umkm) ? 'text-yellow-400' : 'text-gray-300' }}"></i>
-                                        @endfor
-                                    </div>
-                                    <span class="text-gray-600 font-medium">Toko: {{ number_format($item->rating_umkm, 1) }}</span>
-                                </div>
-                            @endif
-                        
-                            <!-- Location dengan Jarak - Simplified on mobile -->
-                            <div class="space-y-1 md:space-y-2">
-                                <!-- Alamat - Hidden on mobile, shown on md+ -->
-                                @if($umkm->latitude && $umkm->longitude)
-                                    <div class="address-container  md:flex items-start gap-2 text-xs" 
-                                         data-lat="{{ $umkm->latitude }}" 
-                                         data-lng="{{ $umkm->longitude }}"
-                                         data-umkm-id="{{ $umkm->id }}">
-                                        <i class="fas fa-map-marker-alt text-[#039b00] mt-0.5 flex-shrink-0"></i>
-                                        <span class="text-gray-600 leading-relaxed address-text flex-1">
-                                            <i class="fas fa-spinner fa-spin text-[#009b97]"></i> Memuat alamat...
-                                    </span>
-                                    </div>
-                            @else
-                                    <div class=" md:flex items-start gap-2 text-xs text-gray-400">
-                                        <i class="fas fa-map-marker-alt mt-0.5 flex-shrink-0"></i>
-                                        <span>Lokasi tidak tersedia</span>
-                                    </div>
-                            @endif
-                            
-                                <!-- Jarak - Always visible, smaller on mobile -->
-                                @if($umkm->latitude && $umkm->longitude)
-                                    <div class="flex items-center gap-1.5 md:gap-2 text-xs text-black font-medium distance-container" 
-                                   data-umkm-lat="{{ $umkm->latitude }}" 
-                                   data-umkm-lng="{{ $umkm->longitude }}"
-                                   data-umkm-id="{{ $umkm->id }}">
-                                        <i class="fas fa-route text-xs text-red-600"></i>
-                                        <span class="distance-text">Menghitung...</span>
-                                    </div>
-                            @endif
-                            </div>
-                        </div>
-                    @endif
-                    
-                    <!-- Action Button -->
-                    <button onclick="event.stopPropagation(); window.location.href='{{ route('public.layanan.show', $item->id) }}'" 
-                            class="w-full group/btn bg-[#32a752] hover:bg-[#027a00] text-white text-center py-2 md:py-2.5 lg:py-3 rounded-lg md:rounded-xl text-xs md:text-sm lg:text-base font-semibold transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2">
-                        <span>Detail Layanan    </span>
-                        <i class="fas fa-arrow-right text-xs md:text-sm group-hover/btn:translate-x-1 transition-transform"></i>
-                    </button>
-                </div>
-            </div>
-        @empty
-            <div class="col-span-full">
-                <div class="bg-gradient-to-br from-gray-50 to-[#e6f5f4] rounded-2xl shadow-lg p-12 md:p-16 text-center border border-gray-100">
-                    <div class="max-w-md mx-auto">
-                        <div class="w-32 h-32 bg-gradient-to-br from-[#009b97]/20 to-[#009b97]/10 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                            <i class="fas fa-search text-5xl text-[#009b97]"></i>
-                        </div>
-                        <h3 class="text-2xl font-bold text-gray-900 mb-3">Tidak ada produk ditemukan</h3>
-                        <p class="text-gray-600 mb-8 leading-relaxed">Coba ubah kata kunci pencarian atau filter Anda untuk menemukan produk yang Anda cari</p>
-                        <a href="{{ route('public.katalog') }}" 
-                           class="inline-flex items-center gap-2 bg-[#009b97] hover:bg-[#007a77] text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
-                            <i class="fas fa-redo"></i>
-                            <span>Reset Filter</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        @endforelse
-    </div>
+    <!-- React Product Grid -->
+    <div id="katalog-products-root"
+         data-products='@json($productsForReact)'
+         data-total="{{ $layanan->total() }}"
+         data-showing="{{ $layanan->count() }}"></div>
+
+
 
     <!-- Pagination -->
     @if($layanan->hasPages())
@@ -637,6 +429,7 @@
 @endsection
 
 @section('scripts')
+@vite(['resources/js/katalog.jsx'])
 <script>
     // Wait for DOM to be ready
     document.addEventListener('DOMContentLoaded', function() {
@@ -1080,7 +873,7 @@
                 title: 'Like UMKM',
                 html: `<div class="text-left">
                     <p class="mb-3">Anda akan menyukai UMKM <strong>${umkmNama}</strong></p>
-                    <p class="text-sm text-gray-600">💡 <strong>Informasi:</strong> Menyukai layanan ini akan menyukai semua layanan dari UMKM yang sama.</p>
+                    <p class="text-sm text-gray-600"><i class="fas fa-lightbulb text-yellow-500 mr-1"></i> <strong>Informasi:</strong> Menyukai layanan ini akan menyukai semua layanan dari UMKM yang sama.</p>
                 </div>`,
                 icon: 'info',
                 showCancelButton: true,

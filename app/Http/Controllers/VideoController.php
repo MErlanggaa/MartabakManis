@@ -25,7 +25,7 @@ class VideoController extends Controller
         // Ensure user has UMKM
         $umkm = Auth::user()->umkm;
         if (!$umkm) {
-            return redirect()->route('umkm.create')->with('error', 'Buat toko terlebih dahulu.');
+            return redirect()->route('umkm.dashboard')->with('error', 'Buat profil toko terlebih dahulu.');
         }
         
         $products = $umkm->layanan; // Get umkm products

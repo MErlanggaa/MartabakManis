@@ -37,7 +37,7 @@
                            required
                            autocomplete="name"
                            autofocus
-                           class="appearance-none relative block w-full px-4 py-3 border @error('name') border-red-300 @else border-gray-300 @enderror placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                           class="input-modern @error('name') border-red-300 focus:border-red-500 focus:ring-red-500/20 @enderror"
                            placeholder="Masukkan nama lengkap">
                     @error('name')
                         <p class="mt-2 text-sm text-red-600 flex items-center">
@@ -58,7 +58,7 @@
                            value="{{ old('email') }}" 
                            required
                            autocomplete="email"
-                           class="appearance-none relative block w-full px-4 py-3 border @error('email') border-red-300 @else border-gray-300 @enderror placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                           class="input-modern @error('email') border-red-300 focus:border-red-500 focus:ring-red-500/20 @enderror"
                            placeholder="nama@email.com">
                     @error('email')
                         <p class="mt-2 text-sm text-red-600 flex items-center">
@@ -79,11 +79,11 @@
                                name="password" 
                                required
                                autocomplete="new-password"
-                               class="appearance-none relative block w-full px-4 py-3 border @error('password') border-red-300 @else border-gray-300 @enderror placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all pr-12"
+                               class="input-modern pr-12 @error('password') border-red-300 focus:border-red-500 focus:ring-red-500/20 @enderror"
                                placeholder="Minimal 8 karakter">
                         <button type="button" 
                                 onclick="togglePassword('password')"
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
                             <i class="fas fa-eye" id="password-toggle-icon"></i>
                         </button>
                     </div>
@@ -107,11 +107,11 @@
                                name="password_confirmation" 
                                required
                                autocomplete="new-password"
-                               class="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all pr-12"
+                               class="input-modern pr-12"
                                placeholder="Ulangi password">
                         <button type="button" 
                                 onclick="togglePassword('password_confirmation')"
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
                             <i class="fas fa-eye" id="password_confirmation-toggle-icon"></i>
                         </button>
                     </div>
@@ -125,7 +125,7 @@
                     <select id="role" 
                             name="role" 
                             required
-                            class="appearance-none relative block w-full px-4 py-3 border @error('role') border-red-300 @else border-gray-300 @enderror text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white">
+                            class="input-modern @error('role') border-red-300 focus:border-red-500 focus:ring-red-500/20 @enderror">
                         <option value="">Pilih Role</option>
                         <option value="user" {{ old('role') == 'user' ? 'selected' : '' }}>User Biasa</option>
                         <option value="umkm" {{ old('role') == 'umkm' ? 'selected' : '' }}>Pemilik UMKM</option>
@@ -151,10 +151,8 @@
                 <!-- Submit Button -->
                 <div>
                     <button type="submit" 
-                            class="group relative w-full flex justify-center items-center py-3 px-4 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                        <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                            <i class="fas fa-user-plus text-green-200"></i>
-                        </span>
+                            class="btn-primary w-full">
+                        <i class="fas fa-user-plus text-brand-100 mr-1"></i>
                         Daftar
                     </button>
                 </div>
@@ -174,9 +172,9 @@
 
             <!-- Login Link -->
             <div class="mt-6 text-center">
-                <p class="text-sm text-gray-600">
+                <p class="text-sm text-slate-600">
                     Sudah punya akun?
-                    <a href="{{ route('login') }}" class="font-medium text-green-600 hover:text-green-500 transition-colors">
+                    <a href="{{ route('login') }}" class="font-medium text-brand-600 hover:text-brand-700 transition-colors">
                         Login di sini
                     </a>
                 </p>
@@ -185,7 +183,7 @@
 
         <!-- Back to Home -->
         <div class="text-center">
-            <a href="{{ route('public.katalog') }}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors">
+            <a href="{{ route('home') }}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors">
                 <i class="fas fa-arrow-left mr-2"></i>
                 Kembali ke beranda
             </a>

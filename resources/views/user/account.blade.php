@@ -3,9 +3,9 @@
 @section('content')
 <div class="container mx-auto px-4 py-8 pb-24">
     <!-- User Profile Header -->
-    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+    <div class="card-modern p-6 mb-6">
         <div class="flex flex-col items-center text-center">
-            <div class="w-24 h-24 bg-gradient-to-br from-[#009b97] to-[#007a77] rounded-full flex items-center justify-center text-white text-3xl font-bold mb-4 shadow-lg">
+            <div class="w-24 h-24 bg-brand-600 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-4 shadow-lg shadow-brand-500/20">
                 {{ substr($user->name, 0, 1) }}
             </div>
             <h1 class="text-2xl font-bold text-gray-800">{{ $user->name }}</h1>
@@ -40,20 +40,20 @@
     </div>
 
     <!-- Stats/Tabs -->
-    <div x-data="{ activeTab: 'following' }" class="bg-white rounded-2xl shadow-sm overflow-hidden min-h-[400px]">
+    <div x-data="{ activeTab: 'following' }" class="card-modern overflow-hidden min-h-[400px]">
         <!-- Tabs Header -->
         <div class="flex border-b border-gray-100">
             <button @click="activeTab = 'following'" 
                     class="flex-1 py-4 text-center font-medium transition-colors relative"
-                    :class="activeTab === 'following' ? 'text-[#009b97]' : 'text-gray-500 hover:text-gray-700'">
+                    :class="activeTab === 'following' ? 'text-brand-700' : 'text-slate-500 hover:text-slate-700'">
                 Mengikuti
-                <div x-show="activeTab === 'following'" class="absolute bottom-0 left-0 w-full h-0.5 bg-[#009b97]"></div>
+                <div x-show="activeTab === 'following'" class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-600"></div>
             </button>
             <button @click="activeTab = 'liked'" 
                     class="flex-1 py-4 text-center font-medium transition-colors relative"
-                    :class="activeTab === 'liked' ? 'text-[#009b97]' : 'text-gray-500 hover:text-gray-700'">
+                    :class="activeTab === 'liked' ? 'text-brand-700' : 'text-slate-500 hover:text-slate-700'">
                 Video Disukai
-                <div x-show="activeTab === 'liked'" class="absolute bottom-0 left-0 w-full h-0.5 bg-[#009b97]"></div>
+                <div x-show="activeTab === 'liked'" class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-600"></div>
             </button>
         </div>
 
@@ -75,7 +75,7 @@
                                     @endif
                                 </a>
                                 <div class="ml-4 flex-1 min-w-0">
-                                    <a href="{{ route('videos.umkm.profile', $umkm->id) }}" class="block text-gray-900 font-bold truncate hover:text-[#009b97]">
+                                    <a href="{{ route('videos.umkm.profile', $umkm->id) }}" class="block text-slate-900 font-bold truncate hover:text-brand-600 transition-colors">
                                         {{ $umkm->nama }}
                                     </a>
                                     <p class="text-sm text-gray-500 truncate">{{ $umkm->jenis_umkm }}</p>
@@ -133,6 +133,4 @@
     </div>
 </div>
 
-<!-- Alpine.js is assumed to be loaded in layout or via CDN in head -->
-<script src="//unpkg.com/alpinejs" defer></script>
 @endsection

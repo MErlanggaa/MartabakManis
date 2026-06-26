@@ -1,3 +1,116 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+    }
+
+    body {
+        @apply bg-surface text-slate-800;
+    }
+
+    /* Accessible focus ring for keyboard nav — invisible on click */
+    *:focus-visible {
+        @apply outline-2 outline-offset-2 outline-brand-500 rounded-sm;
+    }
+
+    /* Brand-tinted text selection */
+    ::selection {
+        @apply bg-brand-100 text-brand-900;
+    }
+
+    /* Better default heading tracking */
+    h1, h2, h3 {
+        letter-spacing: -0.02em;
+    }
+}
+
+@layer components {
+    /* ──────────── Buttons ──────────── */
+    .btn-primary {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-6 py-2.5
+               font-semibold text-white shadow-soft
+               transition-all duration-200 ease-out
+               hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-card
+               focus-visible:ring-2 focus-visible:ring-brand-500/40
+               active:translate-y-0 active:shadow-soft;
+    }
+
+    .btn-secondary {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-6 py-2.5
+               font-semibold text-slate-700 shadow-soft
+               transition-all duration-200 ease-out
+               hover:-translate-y-0.5 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700
+               focus-visible:ring-2 focus-visible:ring-brand-500/20;
+    }
+
+    .btn-ghost {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2
+               font-semibold text-slate-600
+               transition-all duration-150 ease-out
+               hover:bg-slate-100 hover:text-slate-900
+               active:bg-slate-200;
+    }
+
+    /* ──────────── Cards ──────────── */
+    .card-modern {
+        @apply overflow-hidden rounded-xl border border-slate-100 bg-white shadow-card transition-shadow duration-300;
+    }
+
+    /* Only elevate on hover for interactive cards — remove global translate */
+
+    /* ──────────── Inputs ──────────── */
+    .input-modern {
+        @apply w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-slate-800
+               transition-all duration-200
+               placeholder:text-slate-400
+               focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/15;
+    }
+
+    /* ──────────── Badges ──────────── */
+    .badge-category {
+        @apply inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-slate-700 shadow-soft backdrop-blur-sm border border-slate-100;
+    }
+
+    /* ──────────── Typography ──────────── */
+    .section-title {
+        @apply text-2xl font-bold tracking-tight text-slate-900 md:text-3xl;
+    }
+
+    .section-subtitle {
+        @apply mt-3 text-base leading-relaxed text-slate-500 md:text-lg;
+    }
+
+    /* ──────────── Skeleton Loading ──────────── */
+    .skeleton {
+        @apply animate-pulse rounded-lg bg-slate-100;
+    }
+
+    /* ──────────── Alert Toasts ──────────── */
+    .alert-success {
+        @apply flex items-center gap-3 rounded-xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-800;
+    }
+
+    .alert-error {
+        @apply flex items-center gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-800;
+    }
+}
+
+/* Hide scrollbar for category scroll */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Smooth image loading fade-in */
+img[loading="lazy"] {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+img[loading="lazy"].loaded,
+img[loading="lazy"][complete] {
+    opacity: 1;
+}

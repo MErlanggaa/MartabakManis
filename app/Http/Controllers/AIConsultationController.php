@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
 class AIConsultationController extends Controller
@@ -50,12 +51,13 @@ class AIConsultationController extends Controller
                 'timestamp' => now()->format('Y-m-d H:i:s')
             ]);
         } else {
-            // Check if it's a rate limit error
-            if (isset($response['error']) && $response['error'] === 'rate_limit') {
+            // Check if it's a rate limit error and return a user-friendly message
+            if (isset($response['message']) && $response['message'] === 'rate_limit') {
                 return response()->json([
                     'success' => false,
-                    'message' => $response['message'] ?? 'Maaf, batas penggunaan API telah tercapai. Silakan coba lagi dalam beberapa saat.'
-                ], 429); // 429 Too Many Requests
+                    // Use the error message from Gemini response or a default friendly text
+                    'message' => $response['error'] ?? 'Batas penggunaan API telah tercapai. Silakan coba lagi dalam beberapa menit.',
+                ], 429);
             }
             
             return response()->json([

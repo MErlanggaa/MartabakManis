@@ -10,11 +10,12 @@ use App\Http\Controllers\AIConsultationController;
 use App\Http\Controllers\UserAIChatController;
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\FollowController;
+use App\Http\Controllers\OrderController;
 
 // Public routes
 Route::get('/', function () {
-    return redirect()->route('public.katalog');
-});
+    return view('welcome');
+})->name('home');
 
 // Authentication routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -137,6 +138,21 @@ Route::middleware('auth')->group(function () {
     Route::post('/layanan/{layananId}/comment', [UserController::class, 'storeCommentLayanan'])->name('comment.layanan.store');
     Route::put('/layanan/comment/{commentId}', [UserController::class, 'updateCommentLayanan'])->name('comment.layanan.update');
     Route::delete('/layanan/comment/{commentId}', [UserController::class, 'deleteCommentLayanan'])->name('comment.layanan.delete');
+});
+
+// Order & Payment routes
+Route::get('/api/orders/pricing', [OrderController::class, 'pricingConfig'])->name('orders.pricing');
+Route::post('/api/orders', [OrderController::class, 'store'])->middleware('auth')->name('orders.store');
+Route::post('/api/orders/notification', [OrderController::class, 'notification'])->name('orders.notification');
+Route::get('/orders/payment/finish', [OrderController::class, 'paymentFinish'])->name('orders.payment.finish');
+Route::get('/orders/payment/error', [OrderController::class, 'paymentError'])->name('orders.payment.error');
+Route::get('/orders/payment/pending', [OrderController::class, 'paymentPending'])->name('orders.payment.pending');
+
+Route::middleware(['auth', 'role:umkm'])->prefix('api/umkm')->group(function () {
+    Route::get('/orders/pending', [OrderController::class, 'pendingForUmkm'])->name('umkm.orders.pending');
+    Route::get('/orders', [OrderController::class, 'indexForUmkm'])->name('umkm.orders.index');
+    Route::post('/orders/mark-seen', [OrderController::class, 'markSeen'])->name('umkm.orders.mark-seen');
+    Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('umkm.orders.update-status');
 });
 
 // Google Maps API routes

@@ -3,18 +3,16 @@
 @section('title', 'Dashboard UMKM')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-6">
+<div class="max-w-7xl mx-auto px-4 py-6 w-full">
     <!-- Header -->
-    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+    <div class="card-modern p-6 mb-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center text-white">
-                        <i class="fas fa-store text-xl"></i>
-                    </div>
+                <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-3">
+                    <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 text-white text-xl shadow-soft">📊</span>
                     Dashboard UMKM
                 </h1>
-                <p class="text-gray-600 mt-2">Kelola profil, data keuntungan, dan layanan UMKM Anda</p>
+                <p class="text-slate-500 mt-2">Kelola profil, pesanan, keuntungan, dan layanan UMKM Anda</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('umkm.ai-consultation') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2">
@@ -36,6 +34,10 @@
         </div>
     </div>
 
+    @if($umkm)
+    <div id="umkm-orders-root" class="mb-6 scroll-mt-24"></div>
+    @endif
+
     @if(!$umkm)
         <!-- Warning: No Profile -->
         <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg mb-6">
@@ -54,7 +56,7 @@
         </div>
     @else
         <!-- Profile Card -->
-        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div class="card-modern p-6 mb-6">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div class="md:col-span-1">
                     <div class="w-full h-48 bg-gray-200 rounded-lg overflow-hidden">
@@ -102,72 +104,21 @@
             </div>
         </div>
 
-        <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-blue-100 text-sm mb-1">Data Keuntungan</p>
-                        <h3 class="text-3xl font-bold">{{ $keuntungan->count() }}</h3>
-                    </div>
-                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-chart-bar text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-green-100 text-sm mb-1">Total Keuntungan</p>
-                        <h3 class="text-2xl font-bold">Rp {{ number_format($keuntungan->sum('keuntungan_bersih'), 0, ',', '.') }}</h3>
-                    </div>
-                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-money-bill-wave text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-purple-100 text-sm mb-1">Total Transaksi</p>
-                        <h3 class="text-3xl font-bold">{{ $keuntungan->sum('jumlah_transaksi') }}</h3>
-                    </div>
-                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-shopping-cart text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl p-6 text-white shadow-lg">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-pink-100 text-sm mb-1">User Favorit</p>
-                        <h3 class="text-3xl font-bold">{{ $favoriteUsers->count() }}</h3>
-                    </div>
-                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-heart text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-gradient-to-br from-[#009b97] to-[#007a77] rounded-xl p-6 text-white shadow-lg">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-white/80 text-sm mb-1">Total Views Video</p>
-                        <h3 class="text-3xl font-bold">{{ number_format($totalVideoViews ?? 0, 0, ',', '.') }}</h3>
-                    </div>
-                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-play-circle text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+        @php
+            $statsData = [
+                ["label" => "Data Keuntungan", "value" => (string) $keuntungan->count(), "icon" => "📊"],
+                ["label" => "Total Keuntungan", "value" => "Rp " . number_format($keuntungan->sum("keuntungan_bersih"), 0, ",", "."), "icon" => "💰"],
+                ["label" => "Total Transaksi", "value" => (string) $keuntungan->sum("jumlah_transaksi"), "icon" => "🛒"],
+                ["label" => "User Favorit", "value" => (string) $favoriteUsers->count(), "icon" => "❤️"],
+                ["label" => "Views Video", "value" => number_format($totalVideoViews ?? 0, 0, ",", "."), "icon" => "🎬"],
+            ];
+        @endphp
+        <!-- Statistics Cards (React) -->
+        <div id="umkm-stats-cards-root" class="mb-6" data-stats="{{ json_encode($statsData) }}"></div>
 
         <!-- Favorite Users -->
         @if($favoriteUsers->count() > 0)
-            <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <div class="card-modern p-6 mb-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <i class="fas fa-heart text-pink-500"></i> User yang Memfavoritkan UMKM Anda
                 </h3>
@@ -193,7 +144,7 @@
         <!-- Charts and Upload -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <!-- Chart -->
-            <div class="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
+            <div class="lg:col-span-2 card-modern p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <i class="fas fa-chart-line text-blue-500"></i> Grafik Keuntungan
                 </h3>
@@ -201,7 +152,7 @@
             </div>
 
             <!-- Upload Excel -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="card-modern p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <i class="fas fa-upload text-green-500"></i> Upload Excel
                 </h3>
@@ -232,7 +183,7 @@
         </div>
 
         <!-- Video Management Section -->
-        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div class="card-modern p-6 mb-6">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <i class="fas fa-video text-red-500"></i> Video Promosi
@@ -276,7 +227,7 @@
         </div>
 
         <!-- Keuntungan Table -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="card-modern p-6 mb-6">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <i class="fas fa-table text-purple-500"></i> Data Keuntungan
@@ -606,6 +557,7 @@
 @endsection
 
 @section('scripts')
+@vite(['resources/js/umkm-orders.jsx'])
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
