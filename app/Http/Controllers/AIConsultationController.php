@@ -14,7 +14,7 @@ class AIConsultationController extends Controller
     public function __construct()
     {
         // Gemini API Key
-        $this->geminiApiKey = 'Set Api';
+        $this->geminiApiKey = env('GEMINI_API_KEY');
     }
 
     public function index()
