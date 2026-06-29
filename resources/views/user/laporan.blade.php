@@ -41,9 +41,29 @@
 
     <!-- Form Laporan -->
     <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+        @if(isset($order))
+            <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-6 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-sm">Menghubungkan Laporan Dengan Transaksi</h4>
+                        <p class="text-xs text-amber-600">Order Code: <strong class="font-mono">{{ $order->order_code }}</strong></p>
+                    </div>
+                </div>
+                <span class="text-xs font-bold bg-amber-200/60 px-2.5 py-1 rounded-lg">Auto-Linked</span>
+            </div>
+        @endif
+
         <form id="laporanForm" onsubmit="submitLaporan(event)">
             @csrf
             
+            @if(isset($order))
+                <input type="hidden" name="order_id" value="{{ $order->id }}">
+                <input type="hidden" name="kategori" value="komplain">
+            @endif
+
             <!-- Nama -->
             <div class="mb-6">
                 <label for="nama" class="block text-sm font-medium text-gray-700 mb-2">
@@ -52,6 +72,7 @@
                 <input type="text" 
                        id="nama" 
                        name="nama" 
+                       value="{{ Auth::check() ? Auth::user()->name : '' }}"
                        required
                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#009b97] focus:border-[#009b97] transition-all"
                        placeholder="Masukkan nama Anda">
@@ -80,16 +101,22 @@
                 <label for="kategori" class="block text-sm font-medium text-gray-700 mb-2">
                     Kategori <span class="text-red-500">*</span>
                 </label>
-                <select id="kategori" 
-                        name="kategori" 
-                        required
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#009b97] focus:border-[#009b97] transition-all">
-                    <option value="">Pilih Kategori</option>
-                    <option value="bug">Bug / Error</option>
-                    <option value="fitur">Saran Fitur Baru</option>
-                    <option value="pertanyaan">Pertanyaan</option>
-                    <option value="lainnya">Lainnya</option>
-                </select>
+                @if(isset($order))
+                    <select disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed text-gray-700">
+                        <option value="komplain" selected>Komplain Toko / Transaksi</option>
+                    </select>
+                @else
+                    <select id="kategori" 
+                            name="kategori" 
+                            required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#009b97] focus:border-[#009b97] transition-all">
+                        <option value="">Pilih Kategori</option>
+                        <option value="bug">Bug / Error</option>
+                        <option value="fitur">Saran Fitur Baru</option>
+                        <option value="pertanyaan">Pertanyaan</option>
+                        <option value="lainnya">Lainnya</option>
+                    </select>
+                @endif
             </div>
 
             <!-- Judul -->
@@ -100,6 +127,7 @@
                 <input type="text" 
                        id="judul" 
                        name="judul" 
+                       value="{{ isset($order) ? 'Komplain Transaksi #' . $order->order_code : '' }}"
                        required
                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#009b97] focus:border-[#009b97] transition-all"
                        placeholder="Ringkasan singkat masalah atau saran Anda">
@@ -227,10 +255,10 @@
             },
             body: JSON.stringify({
                 nama: formData.get('nama'),
-                // Email tidak perlu dikirim karena otomatis dari backend berdasarkan user yang login
-                kategori: formData.get('kategori'),
+                kategori: formData.get('kategori') || 'komplain',
                 judul: formData.get('judul'),
-                deskripsi: formData.get('deskripsi')
+                deskripsi: formData.get('deskripsi'),
+                order_id: formData.get('order_id')
             })
         })
         .then(response => response.json())

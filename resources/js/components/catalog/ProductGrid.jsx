@@ -1,12 +1,13 @@
 import ProductCard from './ProductCard';
 import ScrollReveal from '../motion/ScrollReveal';
+import { Icon } from '@iconify/react';
 
 export default function ProductGrid({ products, total, showing }) {
     if (!products?.length) {
         return (
             <ScrollReveal className="py-16 text-center">
-                <div className="mx-auto max-w-md rounded-2xl border border-dashed border-slate-200 bg-white p-12">
-                    <span className="text-5xl">🔍</span>
+                <div className="mx-auto max-w-md rounded-2xl border border-dashed border-slate-200 bg-white p-12 flex flex-col items-center justify-center">
+                    <Icon icon="lucide:search-x" className="w-12 h-12 text-slate-300 mb-2 animate-bounce" />
                     <h3 className="mt-4 text-xl font-bold text-slate-900">Tidak ada produk ditemukan</h3>
                     <p className="mt-2 text-slate-500">Coba ubah kata kunci pencarian atau filter Anda.</p>
                 </div>

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { Icon } from '@iconify/react';
 import { formatRupiah } from '../../utils/orderPricing';
 
 export default function ProductCard({ product, index = 0 }) {
@@ -23,7 +24,7 @@ export default function ProductCard({ product, index = 0 }) {
                     />
                 ) : (
                     <div className="flex h-full items-center justify-center bg-gradient-to-br from-brand-50 to-slate-100">
-                        <span className="text-5xl text-slate-300 opacity-50">📦</span>
+                        <Icon icon="lucide:package" className="w-12 h-12 text-slate-300 opacity-50" />
                     </div>
                 )}
 

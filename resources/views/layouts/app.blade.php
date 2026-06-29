@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -169,11 +170,11 @@
                 @if(!$isAuthPage)
                 @php
                     $navLinks = [
-                        ['href' => route('public.katalog'), 'label' => 'Katalog', 'icon' => '🏪'],
+                        ['href' => route('public.katalog'), 'label' => 'Katalog', 'icon' => 'lucide:store'],
                     ];
                     $navUserMenu = [
-                        ['href' => route('umkm.edit.account'), 'label' => '✏️ Edit Akun'],
-                        ['href' => route('umkm.history.laporan'), 'label' => '📋 History Laporan'],
+                        ['href' => route('umkm.edit.account'), 'label' => 'Edit Akun', 'icon' => 'lucide:edit-3'],
+                        ['href' => route('umkm.history.laporan'), 'label' => 'History Laporan', 'icon' => 'lucide:clipboard-list'],
                     ];
                     $navUser = ['name' => auth()->user()->name, 'menu' => $navUserMenu];
                 @endphp
@@ -218,24 +219,24 @@
                     @yield('content')
                 </main>
 
-                <!-- Footer (Keeps at bottom) -->
+        <!-- Footer (Keeps at bottom) -->
                 @if(!$isAuthPage)
-                <footer class="mt-auto {{ auth()->check() && auth()->user()->role === 'umkm' ? 'pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-0' : '' }}">
+                <footer class="mt-auto">
                     <!-- Footer Bagian Putih -->
-                    <div class="bg-white text-slate-700 py-12 border-t border-slate-100">
+                    <div class="bg-white text-slate-700 py-8 border-t border-slate-100">
                         <div class="container mx-auto px-4">
-                            <div class="flex flex-col md:flex-row justify-between gap-8">
+                            <div class="flex flex-col md:flex-row justify-between gap-6">
                                 <div class="flex-1">
-                                    <div class="mb-4 flex items-center gap-2">
-                                        <img src="{{ asset('gambar/logo.jpeg') }}" alt="Logo UMKM" class="h-10 w-auto object-contain">
-                                        <span class="font-bold text-slate-900">UMKM<span class="text-brand-500">.go</span></span>
+                                    <div class="mb-3 flex items-center gap-2">
+                                        <img src="{{ asset('gambar/logo.jpeg') }}" alt="Logo UMKM" class="h-8 w-auto object-contain">
+                                        <span class="font-bold text-slate-900"><span class="text-brand-500"></span></span>
                                     </div>
                                     <p class="text-slate-500 text-sm leading-relaxed max-w-md">
                                         Platform digital yang menghubungkan pelaku UMKM Indonesia dengan masyarakat — dari discovery, pemesanan, hingga pembayaran aman.
                                     </p>
                                 </div>
                                 <div class="md:text-left">
-                                    <h4 class="font-bold text-brand-600 mb-4">Bantuan</h4>
+                                    <h4 class="font-bold text-brand-600 mb-3">Bantuan</h4>
                                     <ul class="space-y-2">
                                         <li><a href="#" class="text-slate-500 hover:text-brand-600 text-sm transition-colors">Privacy Policy</a></li>
                                         <li><a href="#" class="text-slate-500 hover:text-brand-600 text-sm transition-colors">Terms and Condition</a></li>
@@ -245,13 +246,11 @@
                         </div>
                     </div>
                     <!-- Footer Bottom Bar -->
-                    <div class="bg-brand-800 text-white px-4 py-4">
+                    <div class="bg-brand-800 text-white px-4 py-3">
                         <div class="container mx-auto">
-                            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                                <p class="text-white text-sm text-center md:text-right whitespace-nowrap">
-                                    © 2025 Martabak Manis | All Rights Reserved.
-                                </p>
-                            </div>
+                            <p class="text-white text-sm text-center whitespace-nowrap">
+                                © 2025 Martabak Manis | All Rights Reserved.
+                            </p>
                         </div>
                     </div>
                 </footer>
@@ -263,25 +262,26 @@
         @if(!$isAuthPage)
         @php
             $navLinks = [
-                ['href' => route('public.katalog'), 'label' => 'Katalog', 'icon' => '🏪'],
+                ['href' => route('public.katalog'), 'label' => 'Katalog', 'icon' => 'lucide:store'],
             ];
             $navUserMenu = [];
             if (auth()->check()) {
                 $role = auth()->user()->role;
                 if ($role === 'admin') {
-                    $navLinks[] = ['href' => route('admin.dashboard'), 'label' => 'Dashboard', 'icon' => '📊'];
+                    $navLinks[] = ['href' => route('admin.dashboard'), 'label' => 'Dashboard', 'icon' => 'lucide:bar-chart-2'];
                 } elseif ($role === 'umkm') {
-                    $navLinks[] = ['href' => route('umkm.dashboard'), 'label' => 'Dashboard', 'icon' => '📊'];
+                    $navLinks[] = ['href' => route('umkm.dashboard'), 'label' => 'Dashboard', 'icon' => 'lucide:bar-chart-2'];
                 } elseif ($role === 'user') {
-                    $navLinks[] = ['href' => route('videos.index'), 'label' => 'Video', 'icon' => '🎬'];
-                    $navLinks[] = ['href' => route('user.ai.chat'), 'label' => 'AI Chat', 'icon' => '🤖'];
+                    $navLinks[] = ['href' => route('videos.index'), 'label' => 'Video', 'icon' => 'lucide:video'];
+                    $navLinks[] = ['href' => route('user.ai.chat'), 'label' => 'AI Chat', 'icon' => 'lucide:bot'];
+                    $navLinks[] = ['href' => route('user.orders'), 'label' => 'Pesanan Saya', 'icon' => 'lucide:shopping-bag'];
                 }
                 if ($role === 'user') {
-                    $navUserMenu[] = ['href' => route('user.account'), 'label' => '👤 Detail Akun'];
-                    $navUserMenu[] = ['href' => route('user.history.laporan'), 'label' => '📋 History Laporan'];
+                    $navUserMenu[] = ['href' => route('user.account'), 'label' => 'Detail Akun', 'icon' => 'lucide:user'];
+                    $navUserMenu[] = ['href' => route('user.history.laporan'), 'label' => 'History Laporan', 'icon' => 'lucide:clipboard-list'];
                 } elseif ($role === 'umkm') {
-                    $navUserMenu[] = ['href' => route('umkm.edit.account'), 'label' => '✏️ Edit Akun'];
-                    $navUserMenu[] = ['href' => route('umkm.history.laporan'), 'label' => '📋 History Laporan'];
+                    $navUserMenu[] = ['href' => route('umkm.edit.account'), 'label' => 'Edit Akun', 'icon' => 'lucide:edit-3'];
+                    $navUserMenu[] = ['href' => route('umkm.history.laporan'), 'label' => 'History Laporan', 'icon' => 'lucide:clipboard-list'];
                 }
             }
             $navUser = auth()->check() ? ['name' => auth()->user()->name, 'menu' => $navUserMenu] : null;
@@ -298,7 +298,7 @@
         @vite(['resources/js/navbar.jsx'])
         @endif
 
-        <main class="flex-grow">
+        <main class="flex-grow {{ auth()->check() && in_array(auth()->user()->role, ['user','umkm']) ? 'pb-20 md:pb-0' : '' }}">
             @if(session('success'))
                 <div class="container mx-auto px-4 py-4">
                     <div class="alert-success" role="alert">
@@ -328,34 +328,28 @@
 
         <!-- Footer -->
         @if(!$isAuthPage)
-        <footer class="mt-auto {{ auth()->check() && in_array(auth()->user()->role, ['user','umkm']) ? 'pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-0' : '' }}">
+        <footer class="mt-auto">
             <!-- Footer Bagian Putih -->
-            <div class="bg-white text-slate-700 py-12 border-t border-slate-100">
+            <div class="bg-white text-slate-700 py-8 border-t border-slate-100">
                 <div class="container mx-auto px-4">
-                    <div class="flex flex-col md:flex-row justify-between gap-8">
+                    <div class="flex flex-col md:flex-row justify-between gap-6">
                         <div class="flex-1">
-                            <div class="mb-4 flex items-center gap-2">
-                                <img src="{{ asset('gambar/logo.jpeg') }}" alt="Logo UMKM" class="h-10 w-auto object-contain">
-                                <span class="font-bold text-slate-900">UMKM<span class="text-brand-500">.go</span></span>
+                            <div class="mb-3 flex items-center gap-2">
+                                <img src="{{ asset('gambar/logo.jpeg') }}" alt="Logo UMKM" class="h-8 w-auto object-contain">
+                                <span class="font-bold text-slate-900"><span class="text-brand-500"></span></span>
                             </div>
-                            <p class="text-slate-500 text-sm leading-relaxed mb-6 max-w-md">
+                            <p class="text-slate-500 text-sm leading-relaxed mb-4 max-w-md">
                                 Platform digital yang menghubungkan pelaku UMKM Indonesia dengan masyarakat — dari discovery, pemesanan, hingga pembayaran aman.
                             </p>
-                            <div class="space-y-3">
-                                <div class="flex items-center gap-3 text-gray-700">
-                                    <i class="fas fa-phone text-brand-600"></i>
-                                    <span class="text-sm">umkm.go</span>
-                                </div>
-                                <div class="flex items-center gap-3 text-gray-700">
-                                    <i class="fas fa-envelope text-brand-600"></i>
-                                    <span class="text-sm">umkm.go</span>
-                                </div>
+                            <div class="flex items-center gap-3 text-gray-600">
+                                <i class="fas fa-envelope text-brand-600"></i>
+                                <span class="text-sm">umkm.go</span>
                             </div>
                         </div>
 
                         <!-- Bantuan - Posisi Kanan -->
                         <div class="md:text-left">
-                            <h4 class="font-bold text-brand-600 mb-4">Bantuan</h4>
+                            <h4 class="font-bold text-brand-600 mb-3">Bantuan</h4>
                             <ul class="space-y-2">
                                 @if(auth()->check() && auth()->user()->role !== 'admin')
                                     <li><a href="{{ route('public.laporan') }}" class="text-slate-500 hover:text-brand-600 text-sm transition-colors">Laporan</a></li>
@@ -371,19 +365,18 @@
             </div>
 
             <!-- Footer Bottom Bar -->
-            <div class="bg-brand-800 text-white px-4 py-4">
+            <div class="bg-brand-800 text-white px-4 py-3">
                 <div class="container mx-auto">
-                    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                        <div class="flex flex-wrap items-center justify-center md:justify-start gap-4">
-                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="YouTube"><i class="fab fa-youtube text-2xl"></i></a>
-                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="WhatsApp"><i class="fab fa-whatsapp text-2xl"></i></a>
-                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Facebook"><i class="fab fa-facebook text-2xl"></i></a>
-                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="LinkedIn"><i class="fab fa-linkedin text-2xl"></i></a>
-                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Instagram"><i class="fab fa-instagram text-2xl"></i></a>
-                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors transform hover:scale-110" aria-label="Twitter"><i class="fab fa-twitter text-2xl"></i></a>
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center justify-center gap-4">
+                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors" aria-label="YouTube"><i class="fab fa-youtube text-xl"></i></a>
+                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors" aria-label="WhatsApp"><i class="fab fa-whatsapp text-xl"></i></a>
+                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors" aria-label="Facebook"><i class="fab fa-facebook text-xl"></i></a>
+                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors" aria-label="LinkedIn"><i class="fab fa-linkedin text-xl"></i></a>
+                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors" aria-label="Instagram"><i class="fab fa-instagram text-xl"></i></a>
+                            <a href="#" data-no-loading class="text-white hover:text-white/80 transition-colors" aria-label="Twitter"><i class="fab fa-twitter text-xl"></i></a>
                         </div>
-
-                        <p class="text-white text-sm text-center md:text-right whitespace-nowrap">
+                        <p class="text-white text-xs text-center sm:text-right whitespace-nowrap">
                             © 2025 Martabak Manis | All Rights Reserved.
                         </p>
                     </div>
@@ -392,9 +385,7 @@
         </footer>
         @endif
     @endif
-    @if(auth()->check() && in_array(auth()->user()->role, ['user','umkm']))
-    <div class="h-16 md:hidden"></div>
-@endif
+
 
   
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -485,32 +476,6 @@
                 }
             }, true);
             
-            // Handle form submissions (GET only) - untuk transisi
-            document.addEventListener('submit', function(e) {
-                const form = e.target;
-                if (form.tagName === 'FORM' && 
-                    form.method.toLowerCase() === 'get' && 
-                    !form.hasAttribute('data-no-loading')) {
-                    showLoading();
-                }
-            });
-            
-            // Handle POST form submissions with loading indicator
-            document.addEventListener('submit', function(e) {
-                const form = e.target;
-                if (form.tagName === 'FORM' && 
-                    form.method.toLowerCase() === 'post' && 
-                    !form.hasAttribute('data-no-loading') &&
-                    !form.hasAttribute('data-no-full-loading')) {
-                    // Show a subtle loading overlay for POST requests
-                    const submitBtn = form.querySelector('button[type="submit"]');
-                    if (submitBtn && !submitBtn.disabled) {
-                        // Button loading is handled in individual forms
-                        // This is just for page-level loading if needed
-                    }
-                }
-            });
-            
             // Handle browser back/forward buttons - transisi
             window.addEventListener('popstate', function() {
                 showLoading();
@@ -589,8 +554,8 @@
     @if(auth()->check() && (auth()->user()->role === 'user' || auth()->user()->role === 'umkm'))
     <div style="position: fixed; bottom: 0; left: 0; right: 0; width: 100%; z-index: 9999; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);" class="bg-white border-t border-gray-200 md:hidden">
         @if(auth()->user()->role === 'user')
-        <div class="grid grid-cols-3 h-16">
-            <a href="{{ route('public.katalog') }}" class="flex flex-col items-center justify-center h-full transition-colors {{ request()->routeIs('public.katalog', 'user.katalog') ? 'text-[#009b97]' : 'text-gray-400 hover:text-gray-600' }}">
+        <div class="grid grid-cols-4 h-16">
+            <a href="{{ route('public.katalog') }}" class="flex flex-col items-center justify-center h-full transition-colors {{ request()->routeIs('home', 'public.katalog', 'user.katalog') ? 'text-[#009b97]' : 'text-gray-400 hover:text-gray-600' }}">
                 <i class="fas fa-home text-xl mb-1"></i>
                 <span class="text-xs font-medium">Beranda</span>
             </a>
@@ -598,7 +563,11 @@
                 <i class="fas fa-play-circle text-xl mb-1"></i>
                 <span class="text-xs font-medium">Video</span>
             </a>
-            <a href="{{ route('user.account') }}" class="flex flex-col items-center justify-center h-full transition-colors {{ request()->routeIs('user.account') ? 'text-[#009b97]' : 'text-gray-400 hover:text-gray-600' }}">
+            <a href="{{ route('user.orders') }}" class="flex flex-col items-center justify-center h-full transition-colors {{ request()->routeIs('user.orders', 'user.orders.detail') ? 'text-[#009b97]' : 'text-gray-400 hover:text-gray-600' }}">
+                <i class="fas fa-shopping-bag text-xl mb-1"></i>
+                <span class="text-xs font-medium">Pesanan</span>
+            </a>
+            <a href="{{ route('user.account') }}" class="flex flex-col items-center justify-center h-full transition-colors {{ request()->routeIs('user.account', 'user.edit.profile', 'user.history.laporan', 'public.laporan', 'laporan.discussion') ? 'text-[#009b97]' : 'text-gray-400 hover:text-gray-600' }}">
                 <i class="fas fa-user text-xl mb-1"></i>
                 <span class="text-xs font-medium">Akun</span>
             </a>
@@ -613,7 +582,7 @@
                 <i class="fas fa-store text-xl mb-1"></i>
                 <span class="text-xs font-medium">Katalog</span>
             </a>
-            <a href="{{ route('umkm.edit.account') }}" class="flex flex-col items-center justify-center h-full transition-colors {{ request()->routeIs('umkm.edit.account', 'umkm.history.laporan') ? 'text-[#009b97]' : 'text-gray-400 hover:text-gray-600' }}">
+            <a href="{{ route('umkm.edit.account') }}" class="flex flex-col items-center justify-center h-full transition-colors {{ request()->routeIs('umkm.edit.account', 'umkm.history.laporan', 'public.laporan', 'laporan.discussion') ? 'text-[#009b97]' : 'text-gray-400 hover:text-gray-600' }}">
                 <i class="fas fa-user-circle text-xl mb-1"></i>
                 <span class="text-xs font-medium">Profil</span>
             </a>

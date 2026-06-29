@@ -11,6 +11,10 @@ use App\Http\Controllers\UserAIChatController;
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderRatingController;
+use App\Http\Controllers\OrderChatController;
+use App\Http\Controllers\WithdrawController;
+use App\Http\Controllers\UMKMFinanceController;
 
 // Public routes
 Route::get('/', function () {
@@ -39,16 +43,35 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/laporan/{id}/detail', [AdminController::class, 'getLaporan'])->name('laporan.show');
     Route::put('/laporan/{id}/status', [AdminController::class, 'updateStatusLaporan'])->name('laporan.update.status');
     Route::delete('/laporan/{id}', [AdminController::class, 'deleteLaporan'])->name('laporan.delete');
+    Route::post('/laporan/{id}/deduct', [AdminController::class, 'deductUmkm'])->name('laporan.deduct');
+    Route::get('/laporan/pending-count', [AdminController::class, 'pendingLaporanCount'])->name('laporan.pending-count');
     
+    // Tracking transaksi user-umkm
+    Route::get('/transactions', [AdminController::class, 'allTransactions'])->name('transactions');
+    Route::get('/transactions/{id}/detail', [AdminController::class, 'getTransactionDetail'])->name('transactions.detail');
+    Route::post('/transactions/{id}/refund', [AdminController::class, 'refundTransaction'])->name('transactions.refund');
+
     // User management routes
     Route::get('/users', [AdminController::class, 'users'])->name('users');
     Route::get('/users/{id}/edit', [AdminController::class, 'editUser'])->name('users.edit');
     Route::put('/users/{id}/update', [AdminController::class, 'updateUser'])->name('users.update');
+
+    // Withdraw / WD management
+    Route::get('/withdraws', [AdminController::class, 'withdrawRequests'])->name('withdraws');
+    Route::get('/withdraws/pending-count', [AdminController::class, 'withdrawPendingCount'])->name('withdraws.pending-count');
+    Route::post('/withdraws/{id}/process', [AdminController::class, 'processWithdraw'])->name('withdraws.process');
+    Route::post('/withdraws/mark-seen', [AdminController::class, 'markWithdrawSeen'])->name('withdraws.mark-seen');
+    Route::post('/laporan/{id}/refund', [AdminController::class, 'processRefundUmkm'])->name('laporan.refund');
 });
 
 // UMKM routes
 Route::middleware(['auth', 'role:umkm'])->prefix('umkm')->name('umkm.')->group(function () {
     Route::get('/dashboard', [UMKMController::class, 'dashboard'])->name('dashboard');
+    
+    // Keuangan routes (mutasi & summary)
+    Route::get('/finance/summary', [UMKMFinanceController::class, 'financeSummary'])->name('finance.summary');
+    Route::get('/finance/history', [UMKMFinanceController::class, 'financeHistory'])->name('finance.history');
+    Route::get('/finance/orders', [UMKMFinanceController::class, 'orderHistory'])->name('finance.orders');
     Route::post('/profile/update', [UMKMController::class, 'updateProfile'])->name('profile.update');
     Route::get('/account/edit', [UMKMController::class, 'editAccount'])->name('edit.account');
     Route::put('/account/update', [UMKMController::class, 'updateAccount'])->name('update.account');
@@ -79,6 +102,12 @@ Route::middleware(['auth', 'role:umkm'])->prefix('umkm')->name('umkm.')->group(f
     // Video
     Route::get('/videos/create', [VideoController::class, 'create'])->name('videos.create');
     Route::post('/videos', [VideoController::class, 'store'])->name('videos.store');
+
+    // Saldo Online & Withdraw
+    Route::get('/saldo', [WithdrawController::class, 'getSaldo'])->name('saldo');
+    Route::get('/withdraws', [WithdrawController::class, 'myWithdraws'])->name('withdraws');
+    Route::post('/withdraws/request', [WithdrawController::class, 'requestWithdraw'])->name('withdraws.request');
+    Route::get('/withdraws/unread-count', [WithdrawController::class, 'unreadCount'])->name('withdraws.unread');
 });
 
 // User routes
@@ -103,6 +132,10 @@ Route::middleware(['auth', 'role:user'])->prefix('user')->name('user.')->group(f
     
     // Follow
     Route::post('/umkm/{umkm}/follow', [FollowController::class, 'toggle'])->name('follow.toggle');
+
+    // Pesanan History
+    Route::get('/orders', [OrderController::class, 'userOrdersPage'])->name('orders');
+    Route::get('/orders/{id}', [OrderController::class, 'userOrderDetailPage'])->name('orders.detail');
 });
 
 // Public UMKM catalog (for non-authenticated users)
@@ -148,11 +181,39 @@ Route::get('/orders/payment/finish', [OrderController::class, 'paymentFinish'])-
 Route::get('/orders/payment/error', [OrderController::class, 'paymentError'])->name('orders.payment.error');
 Route::get('/orders/payment/pending', [OrderController::class, 'paymentPending'])->name('orders.payment.pending');
 
+// User: API order history & detail
+Route::middleware('auth')->group(function () {
+    Route::get('/api/user/orders', [OrderController::class, 'userHistory'])->name('api.user.orders');
+    Route::get('/api/user/orders/{id}', [OrderController::class, 'userOrderDetail'])->name('api.user.orders.detail');
+
+    // Rating
+    Route::get('/api/orders/{id}/rating', [OrderRatingController::class, 'show'])->name('api.orders.rating.show');
+    Route::post('/api/orders/{id}/rating', [OrderRatingController::class, 'store'])->name('api.orders.rating.store');
+
+    // Chat
+    Route::get('/api/orders/{id}/chat', [OrderChatController::class, 'index'])->name('api.orders.chat.index');
+    Route::post('/api/orders/{id}/chat', [OrderChatController::class, 'store'])->name('api.orders.chat.store');
+    Route::post('/api/orders/{id}/chat/read', [OrderChatController::class, 'markRead'])->name('api.orders.chat.read');
+
+    // Confirm Payment
+    Route::post('/api/orders/{id}/confirm-payment', [OrderController::class, 'confirmPayment'])->name('api.orders.confirm-payment');
+
+    // Cancel Order
+    Route::post('/api/orders/{id}/cancel', [OrderController::class, 'userCancel'])->name('api.orders.cancel');
+});
+
 Route::middleware(['auth', 'role:umkm'])->prefix('api/umkm')->group(function () {
     Route::get('/orders/pending', [OrderController::class, 'pendingForUmkm'])->name('umkm.orders.pending');
     Route::get('/orders', [OrderController::class, 'indexForUmkm'])->name('umkm.orders.index');
     Route::post('/orders/mark-seen', [OrderController::class, 'markSeen'])->name('umkm.orders.mark-seen');
     Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('umkm.orders.update-status');
+    Route::put('/orders/{id}/driver', [OrderController::class, 'updateDriverInfo'])->name('umkm.orders.driver');
+});
+
+// Ruang Diskusi Laporan & Mediasi
+Route::middleware('auth')->group(function () {
+    Route::get('/laporan/{id}/discussion', [UserController::class, 'showDiscussionPage'])->name('laporan.discussion');
+    Route::post('/laporan/{id}/discussion', [UserController::class, 'postDiscussionMessage'])->name('laporan.discussion.send');
 });
 
 // Google Maps API routes

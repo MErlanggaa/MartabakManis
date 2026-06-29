@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
+use App\Services\MediaCompressionService;
 // use PhpOffice\PhpSpreadsheet\Spreadsheet;
 // use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 // use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -67,7 +68,7 @@ class UMKMController extends Controller
                 if ($umkm && $umkm->photo_path) {
                     Storage::disk('public')->delete($umkm->photo_path);
                 }
-                $photoPath = $request->file('photo')->store('umkm-photos', 'public');
+                $photoPath = MediaCompressionService::compressAndStoreImage($request->file('photo'), 'umkm-photos');
             } else {
                 $photoPath = $umkm ? $umkm->photo_path : null;
             }
@@ -418,16 +419,19 @@ class UMKMController extends Controller
                 'price' => 'required|numeric|min:0',
                 'description' => 'nullable|string',
                 'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'weight' => 'nullable|numeric|min:0.01',
+                'height' => 'nullable|numeric|min:0.1',
+                'deliveries' => 'nullable|array',
             ]);
 
             // Handle photo upload
             $photoPath = null;
             if ($request->hasFile('photo')) {
                 try {
-                    $photoPath = $request->file('photo')->store('layanan-photos', 'public');
-                    \Log::info('Photo uploaded successfully: ' . $photoPath);
+                    $photoPath = MediaCompressionService::compressAndStoreImage($request->file('photo'), 'layanan-photos');
+                    \Log::info('Photo uploaded & compressed successfully: ' . $photoPath);
                 } catch (\Exception $e) {
-                    \Log::error('Photo upload failed: ' . $e->getMessage());
+                    \Log::error('Photo upload/compression failed: ' . $e->getMessage());
                     return response()->json(['success' => false, 'message' => 'Gagal mengupload foto: ' . $e->getMessage()]);
                 }
             } else {
@@ -441,6 +445,9 @@ class UMKMController extends Controller
                 'price' => $request->price,
                 'description' => $request->description,
                 'photo_path' => $photoPath,
+                'weight' => $request->input('weight', 1.00),
+                'height' => $request->input('height', 10.00),
+                'allowed_deliveries' => $request->has('deliveries') ? $request->input('deliveries') : [],
             ]);
 
             // Attach to UMKM
@@ -543,6 +550,9 @@ class UMKMController extends Controller
                 'price' => 'required|numeric|min:0',
                 'description' => 'nullable|string',
                 'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'weight' => 'nullable|numeric|min:0.01',
+                'height' => 'nullable|numeric|min:0.1',
+                'deliveries' => 'nullable|array',
             ]);
 
             // Handle photo upload
@@ -554,10 +564,10 @@ class UMKMController extends Controller
                         \Storage::disk('public')->delete($layanan->photo_path);
                     }
                     
-                    $photoPath = $request->file('photo')->store('layanan-photos', 'public');
-                    \Log::info('Photo uploaded successfully: ' . $photoPath);
+                    $photoPath = MediaCompressionService::compressAndStoreImage($request->file('photo'), 'layanan-photos');
+                    \Log::info('Photo uploaded & compressed successfully: ' . $photoPath);
                 } catch (\Exception $e) {
-                    \Log::error('Photo upload failed: ' . $e->getMessage());
+                    \Log::error('Photo upload/compression failed: ' . $e->getMessage());
                     return response()->json(['success' => false, 'message' => 'Gagal mengupload foto: ' . $e->getMessage()]);
                 }
             }
@@ -568,6 +578,9 @@ class UMKMController extends Controller
                 'price' => $request->price,
                 'description' => $request->description ?? null,
                 'photo_path' => $photoPath,
+                'weight' => $request->input('weight', 1.00),
+                'height' => $request->input('height', 10.00),
+                'allowed_deliveries' => $request->has('deliveries') ? $request->input('deliveries') : [],
             ]);
 
             \Log::info('Layanan updated successfully:', ['id' => $layanan->id]);
@@ -594,18 +607,30 @@ class UMKMController extends Controller
     public function historyLaporan()
     {
         // Pastikan user sudah login
-        if (!Auth::check()) {
+        if (!\Auth::check()) {
             return redirect()->route('login')->with('error', 'Anda harus login terlebih dahulu untuk melihat history laporan.');
         }
 
-        $user = Auth::user();
+        $user = \Auth::user();
         
-        // Get laporan berdasarkan user_id yang sedang login (pastikan tidak nabrak dengan akun lain)
-        $reports = Report::where('user_id', $user->id)
+        // Get laporan berdasarkan user_id yang sedang login (laporan saya)
+        $reports = \App\Models\Report::where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->paginate(10, ['*'], 'reports_page');
         
-        return view('umkm.history-laporan', compact('reports'));
+        // Get komplain dari pelanggan terhadap toko ini
+        $umkm = $user->umkm;
+        $customerComplaints = collect();
+        if ($umkm) {
+            $customerComplaints = \App\Models\Report::whereHas('order', function($q) use ($umkm) {
+                $q->where('umkm_id', $umkm->id);
+            })
+            ->with(['user', 'order'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10, ['*'], 'complaints_page');
+        }
+        
+        return view('umkm.history-laporan', compact('reports', 'customerComplaints'));
     }
 
     /**

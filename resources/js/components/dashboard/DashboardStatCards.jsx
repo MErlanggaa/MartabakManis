@@ -1,5 +1,6 @@
 import ScrollReveal from '../motion/ScrollReveal';
 import { motion } from 'framer-motion';
+import { Icon } from '@iconify/react';
 
 const gradients = [
     'from-blue-500 to-blue-600',
@@ -21,12 +22,16 @@ export default function DashboardStatCards({ stats }) {
                     >
                         <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-slate-50 transition-transform duration-500 group-hover:scale-150" />
                         <div className="relative flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-slate-500">{stat.label}</p>
-                                <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">{stat.value}</p>
-                            </div>
-                            <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${gradients[i % gradients.length]} text-xl text-white shadow-soft transition-transform duration-300 group-hover:scale-110`}>
-                                {stat.icon}
+                             <div className="min-w-0 flex-1 pr-2">
+                                 <p className="text-sm font-medium text-slate-500 truncate">{stat.label}</p>
+                                 <p className="mt-2 text-xl font-bold tracking-tight text-slate-900 md:text-2xl lg:text-3xl whitespace-nowrap overflow-hidden text-ellipsis">{stat.value}</p>
+                             </div>
+                            <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${gradients[i % gradients.length]} text-xl text-white shadow-soft transition-transform duration-300 group-hover:scale-110`}>
+                                {stat.icon && typeof stat.icon === 'string' && stat.icon.includes(':') ? (
+                                    <Icon icon={stat.icon} className="w-6 h-6" />
+                                ) : (
+                                    stat.icon
+                                )}
                             </div>
                         </div>
                     </motion.div>

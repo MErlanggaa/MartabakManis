@@ -17,6 +17,9 @@
                 <p class="text-gray-600 mt-2">Kelola data UMKM dan upload data AI user</p>
             </div>
             <div class="flex flex-wrap gap-3">
+                <a href="{{ route('admin.transactions') }}" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2">
+                    <i class="fas fa-history"></i> Tracking Transaksi
+                </a>
                 <a href="{{ route('admin.users') }}" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2">
                     <i class="fas fa-users"></i> Manajemen Akun
                 </a>
@@ -34,7 +37,7 @@
     </div>
 
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
             <div class="flex items-center justify-between">
                 <div>
@@ -82,7 +85,28 @@
                 </div>
             </div>
         </div>
+
+        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-red-100 text-sm mb-1">Total Laporan</p>
+                    <h3 class="text-3xl font-bold">{{ $totalLaporan }}</h3>
+                    @if($pendingLaporan > 0)
+                        <span class="inline-flex items-center px-1.5 py-0.5 mt-1 rounded text-[10px] font-bold bg-white text-red-600 animate-pulse">
+                            {{ $pendingLaporan }} Pending
+                        </span>
+                    @endif
+                </div>
+                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-2xl"></i>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Admin Withdrawals (React) -->
+    <div id="admin-withdraw-root" class="mb-6"></div>
+    @vite(['resources/js/admin-dashboard.jsx'])
 
     <!-- UMKM List -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">

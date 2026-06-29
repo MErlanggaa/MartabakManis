@@ -9,7 +9,9 @@
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
                 <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-3">
-                    <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 text-white text-xl shadow-soft">📊</span>
+                    <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 text-white text-xl shadow-soft">
+                        <i class="fas fa-chart-line text-lg"></i>
+                    </span>
                     Dashboard UMKM
                 </h1>
                 <p class="text-slate-500 mt-2">Kelola profil, pesanan, keuntungan, dan layanan UMKM Anda</p>
@@ -106,11 +108,11 @@
 
         @php
             $statsData = [
-                ["label" => "Data Keuntungan", "value" => (string) $keuntungan->count(), "icon" => "📊"],
-                ["label" => "Total Keuntungan", "value" => "Rp " . number_format($keuntungan->sum("keuntungan_bersih"), 0, ",", "."), "icon" => "💰"],
-                ["label" => "Total Transaksi", "value" => (string) $keuntungan->sum("jumlah_transaksi"), "icon" => "🛒"],
-                ["label" => "User Favorit", "value" => (string) $favoriteUsers->count(), "icon" => "❤️"],
-                ["label" => "Views Video", "value" => number_format($totalVideoViews ?? 0, 0, ",", "."), "icon" => "🎬"],
+                ["label" => "Data Keuntungan", "value" => (string) $keuntungan->count(), "icon" => "lucide:bar-chart-2"],
+                ["label" => "Total Keuntungan", "value" => "Rp " . number_format($keuntungan->sum("keuntungan_bersih"), 0, ",", "."), "icon" => "lucide:dollar-sign"],
+                ["label" => "Total Transaksi", "value" => (string) $keuntungan->sum("jumlah_transaksi"), "icon" => "lucide:shopping-cart"],
+                ["label" => "User Favorit", "value" => (string) $favoriteUsers->count(), "icon" => "lucide:heart"],
+                ["label" => "Views Video", "value" => number_format($totalVideoViews ?? 0, 0, ",", "."), "icon" => "lucide:video"],
             ];
         @endphp
         <!-- Statistics Cards (React) -->
@@ -208,7 +210,15 @@
                             </div>
                             <div class="p-3">
                                 <p class="text-sm font-medium text-gray-900 line-clamp-2 mb-2">{{ $video->caption }}</p>
-                                <p class="text-xs text-gray-500">{{ $video->created_at->diffForHumans() }}</p>
+                                <div class="flex items-center gap-4 text-xs text-gray-500 mb-2">
+                                    <span class="flex items-center gap-1">
+                                        <i class="fas fa-heart text-rose-500"></i> {{ $video->likes()->count() }}
+                                    </span>
+                                    <a href="{{ route('videos.show', $video->id) }}" target="_blank" class="flex items-center gap-1 hover:text-blue-600 transition-colors font-semibold">
+                                        <i class="fas fa-comment text-blue-500"></i> {{ $video->comments()->count() }} Komen
+                                    </a>
+                                </div>
+                                <p class="text-xs text-gray-400">{{ $video->created_at->diffForHumans() }}</p>
                             </div>
                         </div>
                     @endforeach
@@ -225,6 +235,9 @@
                 </div>
             @endif
         </div>
+
+        <!-- Saldo Online & Withdraw (React) -->
+        <div id="umkm-saldo-root" class="mb-6"></div>
 
         <!-- Keuntungan Table -->
         <div class="card-modern p-6 mb-6">
@@ -498,6 +511,34 @@
                             <textarea id="layanan_description" name="description" rows="3"
                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"></textarea>
                         </div>
+                        <div>
+                            <label for="layanan_weight" class="block text-sm font-medium text-gray-700 mb-2">Berat Makanan (kg)</label>
+                            <input type="number" id="layanan_weight" name="weight" min="0.01" step="0.01" value="1.00" required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label for="layanan_height" class="block text-sm font-medium text-gray-700 mb-2">Tinggi Makanan (cm)</label>
+                            <input type="number" id="layanan_height" name="height" min="0.1" step="0.1" value="10.0" required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Jasa Pengiriman Instan yang Aktif</label>
+                        <div class="flex flex-wrap gap-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                             <label class="inline-flex items-center">
+                                 <input type="checkbox" name="deliveries[]" value="gojek" id="delivery_gojek" checked class="rounded border-gray-300 text-orange-600 focus:ring-orange-500">
+                                 <span class="ml-2 text-sm text-gray-700 font-semibold"><i class="fas fa-motorcycle text-emerald-600 mr-1"></i> Gojek (GoSend)</span>
+                             </label>
+                             <label class="inline-flex items-center">
+                                 <input type="checkbox" name="deliveries[]" value="grab" id="delivery_grab" checked class="rounded border-gray-300 text-orange-600 focus:ring-orange-500">
+                                 <span class="ml-2 text-sm text-gray-700 font-semibold"><i class="fas fa-car text-emerald-600 mr-1"></i> Grab (GrabSend)</span>
+                             </label>
+                             <label class="inline-flex items-center">
+                                 <input type="checkbox" name="deliveries[]" value="umkm_go" id="delivery_umkm_go" checked class="rounded border-gray-300 text-orange-600 focus:ring-orange-500">
+                                 <span class="ml-2 text-sm text-gray-700 font-semibold"><i class="fas fa-box text-[#009b97] mr-1"></i> UMKM.go (Kurir)</span>
+                             </label>
+                         </div>
+                         <p class="mt-1 text-xs text-gray-500"><i class="fas fa-lightbulb text-amber-500 mr-1"></i> Jika semua jasa instan dinonaktifkan, pembeli hanya bisa membeli lewat Tokopedia/Shopee.</p>
                     </div>
                     <div class="flex gap-3">
                         <button type="submit" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg">
@@ -822,6 +863,14 @@
                 document.getElementById('layanan_nama').value = layanan.nama;
                 document.getElementById('layanan_price').value = layanan.price;
                 document.getElementById('layanan_description').value = layanan.description || '';
+                document.getElementById('layanan_weight').value = layanan.weight || '1.00';
+                document.getElementById('layanan_height').value = layanan.height || '10.00';
+
+                // Populate active deliveries checkbox
+                const allowed = layanan.allowed_deliveries || ['gojek', 'grab', 'umkm_go'];
+                document.getElementById('delivery_gojek').checked = allowed.includes('gojek');
+                document.getElementById('delivery_grab').checked = allowed.includes('grab');
+                document.getElementById('delivery_umkm_go').checked = allowed.includes('umkm_go');
                 
                 // Set photo preview if exists
                 const photoPreview = document.getElementById('layanan_photo_preview');
@@ -1209,6 +1258,13 @@
                     formData.append('nama', document.getElementById('layanan_nama').value);
                     formData.append('price', document.getElementById('layanan_price').value);
                     formData.append('description', document.getElementById('layanan_description').value);
+                    formData.append('weight', document.getElementById('layanan_weight').value);
+                    formData.append('height', document.getElementById('layanan_height').value);
+
+                    // Append active deliveries check states
+                    if (document.getElementById('delivery_gojek').checked) formData.append('deliveries[]', 'gojek');
+                    if (document.getElementById('delivery_grab').checked) formData.append('deliveries[]', 'grab');
+                    if (document.getElementById('delivery_umkm_go').checked) formData.append('deliveries[]', 'umkm_go');
                     
                     // Hanya tambahkan photo jika ada file baru
                     const photoInput = document.getElementById('layanan_photo');

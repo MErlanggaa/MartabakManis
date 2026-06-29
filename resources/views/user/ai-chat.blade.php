@@ -70,14 +70,14 @@
             <!-- Quick Actions -->
             <div class="mt-3 flex flex-wrap gap-2">
                 <button onclick="sendQuickQuestion('Rekomendasi menu')" 
-                        class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-full transition-colors">
-                    📋 Rekomendasi menu
+                        class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-full transition-colors flex items-center gap-1.5">
+                    <i class="fas fa-clipboard-list text-purple-500"></i> Rekomendasi menu
                 </button>
               
              
                 <button onclick="sendQuickQuestion('Cara pemesanan')" 
-                        class="text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 px-3 py-1 rounded-full transition-colors">
-                    📦 Cara pemesanan
+                        class="text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 px-3 py-1 rounded-full transition-colors flex items-center gap-1.5">
+                    <i class="fas fa-box text-orange-500"></i> Cara pemesanan
                 </button>
             </div>
         </div>

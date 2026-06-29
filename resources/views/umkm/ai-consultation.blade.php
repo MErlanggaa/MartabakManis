@@ -85,20 +85,20 @@
                     <!-- Quick Actions -->
                     <div class="mt-3 flex flex-wrap gap-2">
                         <button onclick="sendQuickQuestion('Bagaimana cara meningkatkan penjualan?')" 
-                                class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-full transition-colors">
-                            📈 Meningkatkan Penjualan
+                                class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-full transition-colors flex items-center gap-1.5">
+                            <i class="fas fa-chart-line text-blue-500"></i> Meningkatkan Penjualan
                         </button>
                         <button onclick="sendQuickQuestion('Strategi digital marketing apa yang efektif?')" 
-                                class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-full transition-colors">
-                            💻 Digital Marketing
+                                class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-full transition-colors flex items-center gap-1.5">
+                            <i class="fas fa-laptop-code text-purple-500"></i> Digital Marketing
                         </button>
                         <button onclick="sendQuickQuestion('Bagaimana mengelola keuangan bisnis?')" 
-                                class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-full transition-colors">
-                            💰 Manajemen Keuangan
+                                class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-full transition-colors flex items-center gap-1.5">
+                            <i class="fas fa-wallet text-green-500"></i> Manajemen Keuangan
                         </button>
                         <button onclick="sendQuickQuestion('Cara mendapatkan modal untuk bisnis?')" 
-                                class="text-xs bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-3 py-1 rounded-full transition-colors">
-                            💵 Mendapatkan Modal
+                                class="text-xs bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-3 py-1 rounded-full transition-colors flex items-center gap-1.5">
+                            <i class="fas fa-hand-holding-usd text-amber-500"></i> Mendapatkan Modal
                         </button>
                     </div>
                 </div>
@@ -280,7 +280,7 @@
             } else {
                 // Check if it's a rate limit error (429)
                 if (status === 429) {
-                    addMessage('⚠️ ' + (data.message || 'Maaf, batas penggunaan API telah tercapai. Free tier memiliki limit 10 request per menit. Silakan tunggu sebentar dan coba lagi.'), 'ai');
+                    addMessage('<i class="fas fa-exclamation-triangle text-amber-500 mr-1"></i> ' + (data.message || 'Maaf, batas penggunaan API telah tercapai. Free tier memiliki limit 10 request per menit. Silakan tunggu sebentar dan coba lagi.'), 'ai');
                 } else {
                     addMessage(data.message || 'Maaf, terjadi kesalahan. Silakan coba lagi.', 'ai');
                 }

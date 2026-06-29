@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
+import { Icon } from '@iconify/react';
 import ScrollReveal from '../motion/ScrollReveal';
 
 const icons = {
-    umkm: '🏪',
-    products: '📦',
-    users: '👥',
-    orders: '🛒',
+    umkm: 'lucide:store',
+    products: 'lucide:package',
+    users: 'lucide:users',
+    orders: 'lucide:shopping-cart',
 };
 
 function StatCard({ stat, index }) {
@@ -15,8 +16,8 @@ function StatCard({ stat, index }) {
                 className="group relative overflow-hidden rounded-xl border border-slate-100 bg-white p-6 text-center shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
             >
                 <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-brand-50/50 blur-2xl transition-all group-hover:bg-brand-50" />
-                <div className="relative z-10 mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-brand-50 text-brand-600 text-2xl transition-transform duration-300 group-hover:scale-110">
-                    {icons[stat.key] || '✨'}
+                <div className="relative z-10 mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-transform duration-300 group-hover:scale-110">
+                    <Icon icon={icons[stat.key] || 'lucide:sparkles'} className="w-7 h-7" />
                 </div>
                 <p className="relative z-10 text-3xl font-extrabold text-slate-900 md:text-4xl">
                     {stat.value}

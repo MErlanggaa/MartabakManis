@@ -11,12 +11,16 @@ class Report extends Model
 
     protected $fillable = [
         'user_id',
+        'order_id',
         'nama',
         'email',
         'kategori',
         'judul',
         'deskripsi',
         'status',
+        'unread_by_user',
+        'unread_by_umkm',
+        'unread_by_admin',
         'respon_admin',
         'admin_id',
     ];
@@ -40,6 +44,12 @@ class Report extends Model
         return $this->belongsTo(User::class, 'admin_id');
     }
 
+    // Relasi ke order (opsional - jika laporan terkait transaksi)
+    public function order()
+    {
+        return $this->belongsTo(Order::class, 'order_id');
+    }
+
     // Scope untuk filter berdasarkan user_id (untuk history user)
     public function scopeByUser($query, $userId)
     {
@@ -59,6 +69,7 @@ class Report extends Model
             'bug' => 'Bug / Error',
             'fitur' => 'Saran Fitur Baru',
             'pertanyaan' => 'Pertanyaan',
+            'komplain' => 'Komplain Toko / Transaksi',
             'lainnya' => 'Lainnya'
         ];
         
@@ -87,5 +98,11 @@ class Report extends Model
         ];
         
         return $colors[$this->status] ?? 'gray';
+    }
+
+    // Relasi dengan pesan diskusi laporan
+    public function messages()
+    {
+        return $this->hasMany(ReportMessage::class, 'report_id');
     }
 }

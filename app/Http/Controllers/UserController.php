@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\Validator;
 use App\Models\UMKM;
 use App\Models\User;
 use App\Models\Comment;
@@ -23,11 +23,11 @@ class UserController extends Controller
             $kw = trim($request->search);
             $query->where(function ($q) use ($kw) {
                 $q->where('nama', 'like', "%{$kw}%")
-                  ->orWhere('description', 'like', "%{$kw}%")
-                  ->orWhereHas('umkm', function ($qq) use ($kw) {
-                      $qq->where('nama', 'like', "%{$kw}%")
-                         ->orWhere('jenis_umkm', 'like', "%{$kw}%");
-                  });
+                    ->orWhere('description', 'like', "%{$kw}%")
+                    ->orWhereHas('umkm', function ($qq) use ($kw) {
+                        $qq->where('nama', 'like', "%{$kw}%")
+                            ->orWhere('jenis_umkm', 'like', "%{$kw}%");
+                    });
             });
         }
 
@@ -42,7 +42,7 @@ class UserController extends Controller
         if ($request->boolean('favorite') && Auth::check()) {
             $userId = Auth::id();
             $userFavoriteUmkmIds = collect(Auth::user()->favorites ?? [])
-                ->map(fn ($v) => (int) $v)->filter()->values()->all();
+                ->map(fn($v) => (int) $v)->filter()->values()->all();
 
             if (!empty($userFavoriteUmkmIds)) {
                 // Use whereIn with explicit table prefix to avoid ambiguous column error
@@ -52,12 +52,12 @@ class UserController extends Controller
                     $tableName = $model->getTable();
                     $primaryKey = $model->getKeyName();
                     $qualifiedKeyName = $tableName . '.' . $primaryKey;
-                    
+
                     $q->where(function ($qq) use ($userId, $userFavoriteUmkmIds, $qualifiedKeyName) {
                         // For JSON column, no prefix needed (already scoped to umkm table)
                         // For ID column, use qualified column name (umkm.id) to avoid ambiguity with pivot table
                         $qq->whereJsonContains('favorite', $userId)
-                           ->orWhereIn($qualifiedKeyName, $userFavoriteUmkmIds);
+                            ->orWhereIn($qualifiedKeyName, $userFavoriteUmkmIds);
                     });
                 });
             } else {
@@ -85,17 +85,17 @@ class UserController extends Controller
         if ($request->boolean('recommendation') && $request->filled('user_lat') && $request->filled('user_lng')) {
             $userLat = $request->user_lat;
             $userLng = $request->user_lng;
-            
+
             // Tambahkan filter berdasarkan preferensi user jika login
             if (Auth::check()) {
                 $user = Auth::user();
                 $userFavorites = $user->favorites ?? [];
-                
+
                 if (!empty($userFavorites)) {
                     // Prioritaskan jenis UMKM favorit user
                     $favoriteUmkm = UMKM::whereIn('id', $userFavorites)->get();
                     $favoriteJenis = $favoriteUmkm->pluck('jenis_umkm')->unique()->toArray();
-                    
+
                     if (!empty($favoriteJenis)) {
                         $query->whereHas('umkm', function ($q) use ($favoriteJenis) {
                             $q->whereIn('jenis_umkm', $favoriteJenis);
@@ -125,26 +125,26 @@ class UserController extends Controller
         // This makes page load much faster
         $layanan->getCollection()->transform(function ($item) {
             $umkm = $item->umkm->first();
-            
+
             if (!$umkm) {
                 $item->umkm_latitude = null;
                 $item->umkm_longitude = null;
                 return $item;
             }
-            
+
             // Store coordinates for JavaScript reverse geocoding
             $item->umkm_latitude = $umkm->latitude;
             $item->umkm_longitude = $umkm->longitude;
             $item->umkm_id = $umkm->id;
-            
+
             // Calculate rating for layanan
             $item->rating_layanan = Comment::where('layanan_id', $item->id)->avg('rating') ?? 0;
-            
+
             // Calculate rating for UMKM (komentar untuk UMKM, bukan layanan)
             $item->rating_umkm = Comment::where('umkm_id', $umkm->id)
                 ->whereNull('layanan_id')
                 ->avg('rating') ?? 0;
-            
+
             return $item;
         });
 
@@ -159,27 +159,27 @@ class UserController extends Controller
     {
         set_time_limit(30); // Set execution time limit to 30 seconds
         $umkm = UMKM::with('user', 'layanan', 'keuntungan')->findOrFail($id);
-        
+
         // Increment views
         $umkm->increment('views');
-        
+
         // Get similar UMKM based on category (jenis_umkm)
         $similarUmkm = UMKM::where('jenis_umkm', $umkm->jenis_umkm)
             ->where('id', '!=', $umkm->id) // Exclude current UMKM
             ->with('user', 'layanan')
             ->limit(4) // Limit to 4 similar UMKM
             ->get();
-        
+
         // Get comments with user relation, ordered by newest first
         $comments = Comment::where('umkm_id', $umkm->id)
             ->with('user')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
-        
+
         // Get average rating
         $averageRating = Comment::where('umkm_id', $umkm->id)->avg('rating') ?? 0;
         $totalComments = Comment::where('umkm_id', $umkm->id)->count();
-        
+
         // Get user's comment if authenticated
         $userComment = null;
         if (Auth::check()) {
@@ -187,20 +187,20 @@ class UserController extends Controller
                 ->where('user_id', Auth::id())
                 ->first();
         }
-        
+
         // Address will be loaded via JavaScript from coordinates
         // No need to fetch from API on server-side - makes page load faster
-        
+
         return view('user.detail-umkm', compact('umkm', 'similarUmkm', 'comments', 'averageRating', 'totalComments', 'userComment'));
     }
-    
+
     /**
      * Helper method to get quick location name (city, province) - faster for katalog
      */
     private function getQuickLocationName($latitude, $longitude)
     {
         $locationName = null;
-        
+
         // Try OpenStreetMap first (faster, free, no API key needed)
         try {
             $response = Http::timeout(5)->retry(2, 100)->get('https://nominatim.openstreetmap.org/reverse', [
@@ -215,18 +215,18 @@ class UserController extends Controller
             $data = $response->json();
             if (isset($data['address'])) {
                 $address = $data['address'];
-                $cityName = $address['city'] 
-                    ?? $address['town'] 
+                $cityName = $address['city']
+                    ?? $address['town']
                     ?? $address['municipality']
                     ?? $address['county']
                     ?? null;
                 $state = $address['state'] ?? $address['region'] ?? null;
-                
+
                 // Handle Jakarta
                 if ($state && (stripos($state, 'Jakarta') !== false || stripos($state, 'DKI') !== false)) {
                     $state = 'DKI Jakarta';
                 }
-                
+
                 if ($cityName && $state) {
                     $locationName = $cityName . ', ' . $state;
                 } elseif ($cityName) {
@@ -238,10 +238,10 @@ class UserController extends Controller
         } catch (\Exception $e) {
             // Silent fail for quick lookup
         }
-        
+
         return $locationName;
     }
-    
+
     /**
      * Helper method to get full address from coordinates
      */
@@ -250,9 +250,9 @@ class UserController extends Controller
         $fullAddress = null;
         $locationName = null;
         $formattedAddress = null; // Store formatted address as fallback
-        
+
         \Log::info('Getting address for coordinates', ['lat' => $latitude, 'lng' => $longitude]);
-        
+
         // Try Google Maps first (if API key available)
         $apiKey = config('services.google_maps.api_key');
         if ($apiKey) {
@@ -266,19 +266,19 @@ class UserController extends Controller
 
                 $data = $response->json();
                 \Log::info('Google Maps response', ['status' => $data['status'] ?? 'unknown', 'results_count' => count($data['results'] ?? [])]);
-                
+
                 if (isset($data['status']) && ($data['status'] === 'OK' || $data['status'] === 'ZERO_RESULTS') && !empty($data['results'])) {
                     // Use the first result (most accurate)
                     $result = $data['results'][0];
                     $addressComponents = $result['address_components'] ?? [];
                     $formattedAddress = $result['formatted_address'] ?? null;
-                    
+
                     // CRITICAL: Always use formatted_address if available, even if components are empty
                     if ($formattedAddress && !$fullAddress) {
                         $fullAddress = $formattedAddress;
                         $locationName = $formattedAddress;
                     }
-                    
+
                     // Initialize address parts
                     $streetNumber = null;
                     $route = null;
@@ -291,13 +291,13 @@ class UserController extends Controller
                     $postalCode = null;
                     $rt = null;
                     $rw = null;
-                    
+
                     // Extract all address components
                     foreach ($addressComponents as $component) {
                         $types = $component['types'];
                         $name = $component['long_name'];
                         $shortName = $component['short_name'] ?? $name;
-                        
+
                         if (in_array('street_number', $types)) {
                             $streetNumber = $name;
                         } elseif (in_array('route', $types)) {
@@ -333,7 +333,7 @@ class UserController extends Controller
                             $postalCode = $name;
                         }
                     }
-                    
+
                     // Try to extract RT/RW from formatted address if not found
                     if (!$rt || !$rw) {
                         if ($formattedAddress) {
@@ -346,16 +346,20 @@ class UserController extends Controller
                             }
                         }
                     }
-                    
+
                     // Handle Jakarta khusus
-                    if ($province && (stripos($province, 'jakarta') !== false || 
-                        stripos($province, 'dki') !== false ||
-                        stripos($province, 'daerah khusus') !== false)) {
+                    if (
+                        $province && (stripos($province, 'jakarta') !== false ||
+                            stripos($province, 'dki') !== false ||
+                            stripos($province, 'daerah khusus') !== false)
+                    ) {
                         $province = 'DKI Jakarta';
                         if (!$city) {
                             foreach ($addressComponents as $component) {
-                                if (in_array('locality', $component['types']) || 
-                                    in_array('sublocality_level_1', $component['types'])) {
+                                if (
+                                    in_array('locality', $component['types']) ||
+                                    in_array('sublocality_level_1', $component['types'])
+                                ) {
                                     $city = $component['long_name'];
                                     break;
                                 }
@@ -365,28 +369,39 @@ class UserController extends Controller
                             $city = 'Jakarta';
                         }
                     }
-                    
+
                     // Build full address dengan urutan: Nomor, Jalan, Blok, RT, RW, Kelurahan, Kecamatan, Kota, Provinsi, Kode Pos
                     $addressParts = [];
-                    if ($premise) $addressParts[] = $premise;
-                    if ($streetNumber) $addressParts[] = 'No. ' . $streetNumber;
-                    if ($subpremise) $addressParts[] = $subpremise;
-                    if ($route) $addressParts[] = $route;
-                    if ($rt) $addressParts[] = $rt;
-                    if ($rw) $addressParts[] = $rw;
-                    if ($kelurahan) $addressParts[] = 'Kel. ' . $kelurahan;
-                    if ($kecamatan) $addressParts[] = 'Kec. ' . $kecamatan;
-                    if ($city) $addressParts[] = $city;
-                    if ($province) $addressParts[] = $province;
-                    if ($postalCode) $addressParts[] = $postalCode;
-                    
+                    if ($premise)
+                        $addressParts[] = $premise;
+                    if ($streetNumber)
+                        $addressParts[] = 'No. ' . $streetNumber;
+                    if ($subpremise)
+                        $addressParts[] = $subpremise;
+                    if ($route)
+                        $addressParts[] = $route;
+                    if ($rt)
+                        $addressParts[] = $rt;
+                    if ($rw)
+                        $addressParts[] = $rw;
+                    if ($kelurahan)
+                        $addressParts[] = 'Kel. ' . $kelurahan;
+                    if ($kecamatan)
+                        $addressParts[] = 'Kec. ' . $kecamatan;
+                    if ($city)
+                        $addressParts[] = $city;
+                    if ($province)
+                        $addressParts[] = $province;
+                    if ($postalCode)
+                        $addressParts[] = $postalCode;
+
                     if (!empty($addressParts)) {
                         $fullAddress = implode(', ', $addressParts);
                     } elseif ($formattedAddress) {
                         // Use formatted address if we can't build from components
                         $fullAddress = $formattedAddress;
                     }
-                    
+
                     \Log::info('Google Maps address extracted', [
                         'fullAddress' => $fullAddress,
                         'formattedAddress' => $formattedAddress,
@@ -399,7 +414,7 @@ class UserController extends Controller
                             'province' => $province
                         ]
                     ]);
-                    
+
                     if ($city && $province) {
                         $locationName = $city . ', ' . $province;
                     } elseif ($city) {
@@ -410,7 +425,7 @@ class UserController extends Controller
                         // Use formatted address as location name if no city/province
                         $locationName = $formattedAddress;
                     }
-                    
+
                     // If we have formatted address but no fullAddress, use formatted address
                     if (!$fullAddress && $formattedAddress) {
                         $fullAddress = $formattedAddress;
@@ -436,7 +451,7 @@ class UserController extends Controller
         } else {
             \Log::info('Google Maps API key not configured, using OpenStreetMap');
         }
-        
+
         // Fallback to OpenStreetMap - ALWAYS try if we don't have fullAddress yet
         if (!$fullAddress) {
             try {
@@ -453,11 +468,11 @@ class UserController extends Controller
 
                 $data = $response->json();
                 \Log::info('OpenStreetMap response', [
-                    'has_address' => isset($data['address']), 
+                    'has_address' => isset($data['address']),
                     'display_name' => $data['display_name'] ?? 'N/A',
                     'error' => $data['error'] ?? null
                 ]);
-                
+
                 // CRITICAL: Always use display_name if available, even if address components are missing
                 if (isset($data['display_name']) && $data['display_name']) {
                     if (!$fullAddress) {
@@ -466,17 +481,17 @@ class UserController extends Controller
                         \Log::info('Using OpenStreetMap display_name', ['address' => $fullAddress]);
                     }
                 }
-                
+
                 if (isset($data['address'])) {
                     $address = $data['address'];
                     $displayName = $data['display_name'] ?? null;
-                    
+
                     $houseNumber = $address['house_number'] ?? null;
                     $road = $address['road'] ?? null;
                     $suburb = $address['suburb'] ?? $address['neighbourhood'] ?? $address['village'] ?? null;
                     $cityDistrict = $address['city_district'] ?? $address['suburb'] ?? null;
-                    $cityName = $address['city'] 
-                        ?? $address['town'] 
+                    $cityName = $address['city']
+                        ?? $address['town']
                         ?? $address['municipality']
                         ?? $address['county']
                         ?? null;
@@ -485,7 +500,7 @@ class UserController extends Controller
                     $quarter = $address['quarter'] ?? null; // Bisa jadi kelurahan
                     $residential = $address['residential'] ?? null;
                     $hamlet = $address['hamlet'] ?? null;
-                    
+
                     // Extract RT/RW from display name if available
                     $rt = null;
                     $rw = null;
@@ -497,7 +512,7 @@ class UserController extends Controller
                             $rw = 'RW ' . $rwMatch[1];
                         }
                     }
-                    
+
                     // Determine kelurahan and kecamatan
                     if (!$suburb) {
                         $suburb = $quarter ?? $residential ?? $hamlet;
@@ -506,42 +521,55 @@ class UserController extends Controller
                         // Sometimes city_district is the kecamatan
                         $cityDistrict = $address['city_district'];
                     }
-                    
+
                     // Handle Jakarta khusus
-                    if ($state && (stripos($state, 'Jakarta') !== false || 
-                        stripos($state, 'DKI') !== false ||
-                        stripos($state, 'Daerah Khusus') !== false)) {
+                    if (
+                        $state && (stripos($state, 'Jakarta') !== false ||
+                            stripos($state, 'DKI') !== false ||
+                            stripos($state, 'Daerah Khusus') !== false)
+                    ) {
                         $state = 'DKI Jakarta';
                         if (!$cityName) {
-                            $cityName = $address['locality'] 
+                            $cityName = $address['locality']
                                 ?? $address['suburb']
                                 ?? $address['city_district']
                                 ?? 'Jakarta';
                         }
-                    } elseif ($state && stripos($state, 'Jawa') !== false && 
-                            ($cityName && stripos($cityName, 'Jakarta') !== false)) {
+                    } elseif (
+                        $state && stripos($state, 'Jawa') !== false &&
+                        ($cityName && stripos($cityName, 'Jakarta') !== false)
+                    ) {
                         $state = 'DKI Jakarta';
                     }
-                    
+
                     // Build full address
                     $addressParts = [];
-                    if ($houseNumber) $addressParts[] = 'No. ' . $houseNumber;
-                    if ($road) $addressParts[] = $road;
-                    if ($rt) $addressParts[] = $rt;
-                    if ($rw) $addressParts[] = $rw;
-                    if ($suburb) $addressParts[] = 'Kel. ' . $suburb;
-                    if ($cityDistrict && $cityDistrict != $suburb) $addressParts[] = 'Kec. ' . $cityDistrict;
-                    if ($cityName) $addressParts[] = $cityName;
-                    if ($state) $addressParts[] = $state;
-                    if ($postcode) $addressParts[] = $postcode;
-                    
+                    if ($houseNumber)
+                        $addressParts[] = 'No. ' . $houseNumber;
+                    if ($road)
+                        $addressParts[] = $road;
+                    if ($rt)
+                        $addressParts[] = $rt;
+                    if ($rw)
+                        $addressParts[] = $rw;
+                    if ($suburb)
+                        $addressParts[] = 'Kel. ' . $suburb;
+                    if ($cityDistrict && $cityDistrict != $suburb)
+                        $addressParts[] = 'Kec. ' . $cityDistrict;
+                    if ($cityName)
+                        $addressParts[] = $cityName;
+                    if ($state)
+                        $addressParts[] = $state;
+                    if ($postcode)
+                        $addressParts[] = $postcode;
+
                     if (!empty($addressParts)) {
                         $fullAddress = implode(', ', $addressParts);
                     } elseif ($displayName) {
                         // Use display name from OpenStreetMap if we can't build from components
                         $fullAddress = $displayName;
                     }
-                    
+
                     \Log::info('OpenStreetMap address extracted', [
                         'fullAddress' => $fullAddress,
                         'displayName' => $displayName,
@@ -554,7 +582,7 @@ class UserController extends Controller
                             'state' => $state
                         ]
                     ]);
-                    
+
                     if ($cityName && $state) {
                         $locationName = $cityName . ', ' . $state;
                     } elseif ($cityName) {
@@ -565,7 +593,7 @@ class UserController extends Controller
                         // Use display name as location name if no city/state
                         $locationName = $displayName;
                     }
-                    
+
                     // If we have display name but no fullAddress, use display name
                     if (!$fullAddress && $displayName) {
                         $fullAddress = $displayName;
@@ -573,13 +601,13 @@ class UserController extends Controller
                 }
             } catch (\Exception $e) {
                 \Log::error('OpenStreetMap reverse geocoding exception: ' . $e->getMessage(), [
-                    'lat' => $latitude, 
+                    'lat' => $latitude,
                     'lng' => $longitude,
                     'trace' => $e->getTraceAsString()
                 ]);
             }
         }
-        
+
         // CRITICAL FALLBACK: Always try to get SOMETHING from the coordinates
         // If we still don't have fullAddress, try formattedAddress or locationName
         if (!$fullAddress) {
@@ -603,7 +631,7 @@ class UserController extends Controller
                         'zoom' => 10, // Lower zoom for broader area
                         'addressdetails' => 0, // Don't need details, just display_name
                     ]);
-                    
+
                     $data = $response->json();
                     if (isset($data['display_name']) && $data['display_name']) {
                         $fullAddress = $data['display_name'];
@@ -615,19 +643,19 @@ class UserController extends Controller
                 }
             }
         }
-        
+
         // Log final result
         if ($fullAddress) {
             \Log::info('Final address result', ['fullAddress' => $fullAddress, 'locationName' => $locationName]);
         } else {
             \Log::error('CRITICAL: No address found for coordinates after ALL attempts', [
-                'lat' => $latitude, 
+                'lat' => $latitude,
                 'lng' => $longitude,
                 'formattedAddress' => $formattedAddress,
                 'locationName' => $locationName
             ]);
         }
-        
+
         // Ensure we never return empty string
         if ($fullAddress === '') {
             $fullAddress = null;
@@ -635,7 +663,7 @@ class UserController extends Controller
         if ($locationName === '') {
             $locationName = null;
         }
-        
+
         return [
             'fullAddress' => $fullAddress,
             'locationName' => $locationName
@@ -646,34 +674,34 @@ class UserController extends Controller
     {
         set_time_limit(30); // Set execution time limit to 30 seconds
         $layanan = \App\Models\Layanan::with('umkm.user')->findOrFail($id);
-        
+
         // Increment views for layanan
         $layanan->increment('views');
-        
+
         // Get the first UMKM associated with this layanan
         $umkm = $layanan->umkm->first();
-        
+
         if (!$umkm) {
             abort(404, 'UMKM tidak ditemukan untuk layanan ini');
         }
-        
+
         // Increment views for UMKM as well (when viewing layanan, also count as UMKM view)
         $umkm->increment('views');
-        
+
         // Get similar layanan based on category (jenis_umkm) - KEMBALI KE VERSI SEBELUMNYA
-        $similarLayanan = \App\Models\Layanan::whereHas('umkm', function($q) use ($umkm) {
-                $q->where('jenis_umkm', $umkm->jenis_umkm);
-            })
+        $similarLayanan = \App\Models\Layanan::whereHas('umkm', function ($q) use ($umkm) {
+            $q->where('jenis_umkm', $umkm->jenis_umkm);
+        })
             ->where('id', '!=', $layanan->id) // Exclude current layanan
             ->with('umkm.user')
             ->limit(8)
             ->get()
-            ->map(function($item) {
+            ->map(function ($item) {
                 $similarUmkm = $item->umkm->first();
-                
+
                 // Calculate rating for layanan
                 $item->rating_layanan = Comment::where('layanan_id', $item->id)->avg('rating') ?? 0;
-                
+
                 // Calculate rating for UMKM
                 if ($similarUmkm) {
                     $item->rating_umkm = Comment::where('umkm_id', $similarUmkm->id)
@@ -682,25 +710,25 @@ class UserController extends Controller
                     $item->umkm_latitude = $similarUmkm->latitude;
                     $item->umkm_longitude = $similarUmkm->longitude;
                 }
-                
+
                 return $item;
             });
-        
+
         // Get comments for this layanan with user relation, ordered by newest first
         $commentsLayanan = Comment::where('layanan_id', $layanan->id)
             ->with('user')
             ->orderBy('created_at', 'desc')
             ->get();
-        
+
         // Calculate average rating and total comments for layanan
         $averageRatingLayanan = Comment::where('layanan_id', $layanan->id)->avg('rating') ?? 0;
         $totalCommentsLayanan = Comment::where('layanan_id', $layanan->id)->count();
-        
+
         // Calculate average rating for UMKM (komentar untuk UMKM, bukan layanan)
         $averageRatingUmkm = Comment::where('umkm_id', $umkm->id)
             ->whereNull('layanan_id')
             ->avg('rating') ?? 0;
-        
+
         // Get user's comment if authenticated
         $userCommentLayanan = null;
         if (Auth::check()) {
@@ -708,10 +736,10 @@ class UserController extends Controller
                 ->where('user_id', Auth::id())
                 ->first();
         }
-        
+
         // Address will be loaded via JavaScript from coordinates
         // No need to fetch from API on server-side
-        
+
         return view('user.detail-layanan', compact('layanan', 'umkm', 'similarLayanan', 'commentsLayanan', 'averageRatingLayanan', 'totalCommentsLayanan', 'userCommentLayanan', 'averageRatingUmkm'));
     }
 
@@ -720,16 +748,16 @@ class UserController extends Controller
         $user = Auth::user();
         $favorites = $user->favorites ?? [];
         $umkm = UMKM::find($id);
-        
+
         if (!$umkm) {
             return response()->json(['success' => false, 'message' => 'UMKM tidak ditemukan']);
         }
-        
+
         if (in_array($id, $favorites)) {
             // Remove from favorites
             $favorites = array_diff($favorites, [$id]);
             $message = 'UMKM dihapus dari favorit';
-            
+
             // Update UMKM favorite data
             $umkmFavorites = $umkm->favorite ?? [];
             $umkmFavorites = array_diff($umkmFavorites, [$user->id]);
@@ -741,7 +769,7 @@ class UserController extends Controller
             // Add to favorites
             $favorites[] = $id;
             $message = 'UMKM ditambahkan ke favorit';
-            
+
             // Update UMKM favorite data
             $umkmFavorites = $umkm->favorite ?? [];
             if (!in_array($user->id, $umkmFavorites)) {
@@ -752,13 +780,13 @@ class UserController extends Controller
                 ]);
             }
         }
-        
+
         $user->update(['favorites' => array_values($favorites)]);
-        
+
         $isFavorited = in_array($id, array_values($favorites));
-        
+
         return response()->json([
-            'success' => true, 
+            'success' => true,
             'message' => $message,
             'is_favorited' => $isFavorited
         ]);
@@ -768,20 +796,20 @@ class UserController extends Controller
     {
         $user = Auth::user();
         $userFavorites = $user->favorites ?? [];
-        
+
         // Get metadata from user's favorite UMKM
         $favoriteUmkm = UMKM::whereIn('id', $userFavorites)->get();
-        
+
         // Create metadata for AI recommendation
         $metadata = [
             'favorite_jenis_umkm' => $favoriteUmkm->pluck('jenis_umkm')->unique()->toArray(),
             'favorite_layanan' => $favoriteUmkm->flatMap->layanan->pluck('nama')->unique()->toArray(),
             'user_preferences' => $this->analyzeUserPreferences($favoriteUmkm),
         ];
-        
+
         // Get AI recommendations based on metadata
         $recommendations = $this->getAIRecommendations($metadata, $request->user_lat ?? null, $request->user_lng ?? null);
-        
+
         return response()->json($recommendations);
     }
 
@@ -792,18 +820,18 @@ class UserController extends Controller
             'preferred_layanan' => $favoriteUmkm->flatMap->layanan->groupBy('nama')->map->count()->sortDesc()->keys()->take(3)->toArray(),
             'price_range' => $this->calculatePriceRange($favoriteUmkm),
         ];
-        
+
         return $preferences;
     }
 
     private function calculatePriceRange($favoriteUmkm)
     {
         $prices = $favoriteUmkm->flatMap->layanan->pluck('price');
-        
+
         if ($prices->isEmpty()) {
             return ['min' => 0, 'max' => 1000000];
         }
-        
+
         return [
             'min' => $prices->min(),
             'max' => $prices->max(),
@@ -813,27 +841,27 @@ class UserController extends Controller
     private function getAIRecommendations($metadata, $userLat = null, $userLng = null)
     {
         $query = UMKM::with('user', 'layanan');
-        
+
         // Filter by preferred jenis UMKM
         if (!empty($metadata['favorite_jenis_umkm'])) {
             $query->whereIn('jenis_umkm', $metadata['favorite_jenis_umkm']);
         }
-        
+
         // Filter by preferred layanan
         if (!empty($metadata['favorite_layanan'])) {
-            $query->whereHas('layanan', function($q) use ($metadata) {
+            $query->whereHas('layanan', function ($q) use ($metadata) {
                 $q->whereIn('nama', $metadata['favorite_layanan']);
             });
         }
-        
+
         // Filter by price range
         if (isset($metadata['user_preferences']['price_range'])) {
             $priceRange = $metadata['user_preferences']['price_range'];
-            $query->whereHas('layanan', function($q) use ($priceRange) {
+            $query->whereHas('layanan', function ($q) use ($priceRange) {
                 $q->whereBetween('price', [$priceRange['min'], $priceRange['max']]);
             });
         }
-        
+
         // Filter by distance if user location is provided
         if ($userLat && $userLng) {
             $query->whereRaw("
@@ -842,9 +870,9 @@ class UserController extends Controller
                 sin(radians(latitude)))) <= 15
             ", [$userLat, $userLng, $userLat]);
         }
-        
+
         $recommendations = $query->limit(6)->get();
-        
+
         return [
             'recommendations' => $recommendations,
             'metadata' => $metadata,
@@ -854,36 +882,38 @@ class UserController extends Controller
     public function getDistance($umkmId, $userLat, $userLng)
     {
         $umkm = UMKM::findOrFail($umkmId);
-        
+
         $distance = $this->calculateDistance(
-            $userLat, $userLng,
-            $umkm->latitude, $umkm->longitude
+            $userLat,
+            $userLng,
+            $umkm->latitude,
+            $umkm->longitude
         );
-        
+
         return response()->json(['distance' => round($distance, 2)]);
     }
 
     private function calculateDistance($lat1, $lng1, $lat2, $lng2)
     {
         $earthRadius = 6371; // Earth's radius in kilometers
-        
+
         $dLat = deg2rad($lat2 - $lat1);
         $dLng = deg2rad($lng2 - $lng1);
-        
-        $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng/2) * sin($dLng/2);
-        $c = 2 * atan2(sqrt($a), sqrt(1-$a));
-        
+
+        $a = sin($dLat / 2) * sin($dLat / 2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) * sin($dLng / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
         return $earthRadius * $c;
     }
 
     private function getLocationName($latitude, $longitude, $fallbackAddress = null)
     {
         $locationName = null;
-        
+
         if (!$latitude || !$longitude) {
             return $fallbackAddress ?? 'Lokasi tidak tersedia';
         }
-        
+
         // Try OpenStreetMap Nominatim (gratis)
         try {
             $response = \Illuminate\Support\Facades\Http::timeout(5)->retry(2, 100)->get('https://nominatim.openstreetmap.org/reverse', [
@@ -898,39 +928,41 @@ class UserController extends Controller
             $data = $response->json();
             if (isset($data['address'])) {
                 $address = $data['address'];
-                
+
                 // Extract city/district - cek berbagai kemungkinan field
-                $city = $address['city'] 
-                    ?? $address['town'] 
+                $city = $address['city']
+                    ?? $address['town']
                     ?? $address['municipality']
                     ?? $address['county']
                     ?? $address['suburb']
                     ?? $address['city_district']
                     ?? $address['locality']
                     ?? null;
-                
+
                 $province = $address['state'] ?? $address['region'] ?? null;
-                
+
                 // Handle Jakarta khusus - cek berdasarkan koordinat atau nama
-                $isJakartaArea = ($latitude >= -6.4 && $latitude <= -6.1 && 
-                                 $longitude >= 106.7 && $longitude <= 106.95);
-                
-                if ($isJakartaArea || 
-                    ($province && (stripos($province, 'Jakarta') !== false || 
-                                   stripos($province, 'DKI') !== false)) ||
-                    ($city && stripos($city, 'Jakarta') !== false)) {
-                    
+                $isJakartaArea = ($latitude >= -6.4 && $latitude <= -6.1 &&
+                    $longitude >= 106.7 && $longitude <= 106.95);
+
+                if (
+                    $isJakartaArea ||
+                    ($province && (stripos($province, 'Jakarta') !== false ||
+                        stripos($province, 'DKI') !== false)) ||
+                    ($city && stripos($city, 'Jakarta') !== false)
+                ) {
+
                     $province = 'DKI Jakarta';
-                    
+
                     // Extract nama wilayah Jakarta (Jakarta Pusat, Jakarta Selatan, dll)
                     if (!$city || stripos($city, 'Jakarta') === false) {
                         // Coba berbagai field untuk mendapatkan nama wilayah Jakarta
-                        $city = $address['suburb'] 
+                        $city = $address['suburb']
                             ?? $address['city_district']
                             ?? $address['locality']
                             ?? $address['municipality']
                             ?? 'Jakarta';
-                        
+
                         // Jika masih tidak ada "Jakarta" di nama, tambahkan
                         if (stripos($city, 'Jakarta') === false) {
                             // Coba extract dari display_name atau formatted address
@@ -948,7 +980,7 @@ class UserController extends Controller
                         }
                     }
                 }
-                
+
                 // Format: Kota/Kabupaten, Provinsi
                 if ($city && $province) {
                     return $city . ', ' . $province;
@@ -964,7 +996,7 @@ class UserController extends Controller
         } catch (\Exception $e) {
             \Log::warning('Reverse geocoding failed: ' . $e->getMessage());
         }
-        
+
         return $fallbackAddress ?? 'Lokasi tersedia';
     }
 
@@ -1125,10 +1157,10 @@ class UserController extends Controller
 
         // Check if layanan exists and get associated UMKM
         $layanan = \App\Models\Layanan::with('umkm')->findOrFail($layananId);
-        
+
         // Get the first UMKM associated with this layanan
         $umkm = $layanan->umkm->first();
-        
+
         if (!$umkm) {
             return response()->json([
                 'success' => false,
@@ -1270,17 +1302,21 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * Show laporan bug page - hanya untuk user yang sudah login
-     */
-    public function laporan()
+    public function laporan(Request $request)
     {
         // Cek apakah user sudah login
         if (!Auth::check()) {
             return redirect()->route('login')->with('error', 'Anda harus login terlebih dahulu untuk membuat laporan.');
         }
-        
-        return view('user.laporan');
+
+        $order = null;
+        if ($request->filled('order_id')) {
+            $order = \App\Models\Order::where('id', $request->order_id)
+                ->where('user_id', Auth::id())
+                ->first();
+        }
+
+        return view('user.laporan', compact('order'));
     }
 
     /**
@@ -1294,12 +1330,12 @@ class UserController extends Controller
         }
 
         $user = Auth::user();
-        
+
         // Get laporan berdasarkan user_id yang sedang login (pastikan tidak nabrak dengan akun lain)
         $reports = Report::where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
-        
+
         return view('user.history-laporan', compact('reports'));
     }
 
@@ -1318,17 +1354,24 @@ class UserController extends Controller
 
         $user = Auth::user();
 
+        // Convert empty order_id to null to prevent validation failure on empty string
+        if ($request->has('order_id') && empty($request->order_id)) {
+            $request->merge(['order_id' => null]);
+        }
+
         // Validate request (email tidak perlu divalidasi karena otomatis dari user yang login)
         $request->validate([
             'nama' => 'required|string|max:255',
-            'kategori' => 'required|in:bug,fitur,pertanyaan,lainnya',
+            'kategori' => 'required|in:bug,fitur,pertanyaan,lainnya,komplain',
             'judul' => 'required|string|max:255',
             'deskripsi' => 'required|string|min:10|max:2000',
+            'order_id' => 'nullable|exists:orders,id',
         ]);
 
         // Simpan laporan ke database - email otomatis dari user yang login
         $report = Report::create([
             'user_id' => $user->id, // Simpan user_id untuk memastikan tidak nabrak dengan akun lain
+            'order_id' => $request->order_id ?: null,
             'nama' => $request->nama,
             'email' => $user->email, // Email otomatis dari user yang login, tidak bisa diubah
             'kategori' => $request->kategori,
@@ -1336,12 +1379,12 @@ class UserController extends Controller
             'deskripsi' => $request->deskripsi,
             'status' => 'pending', // Status awal: belum selesai
         ]);
-        
+
         // Tentukan route history berdasarkan role user
-        $historyRoute = $user->role === 'umkm' 
-            ? route('umkm.history.laporan') 
+        $historyRoute = $user->role === 'umkm'
+            ? route('umkm.history.laporan')
             : route('user.history.laporan');
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Laporan Anda berhasil dikirim. Terima kasih atas feedback Anda!',
@@ -1364,7 +1407,7 @@ class UserController extends Controller
     public function updateProfile(Request $request)
     {
         $user = Auth::user();
-        
+
         $request->validate([
             'name' => 'required|string|max:255',
             'password' => 'nullable|string|min:8|confirmed',
@@ -1387,13 +1430,154 @@ class UserController extends Controller
     public function account()
     {
         $user = Auth::user();
-        
+
         // Get following list
         $following = $user->following ?? collect([]);
-        
+
         // Get liked videos
         $likedVideos = $user->likedVideos()->with('umkm')->latest('pivot_created_at')->get();
-        
+
         return view('user.account', compact('user', 'following', 'likedVideos'));
+    }
+
+    /**
+     * Show report discussion page (gabungan user, umkm, admin)
+     */
+    public function showDiscussionPage($id)
+    {
+        if (!\Auth::check()) {
+            return redirect()->route('login')->with('error', 'Anda harus login terlebih dahulu.');
+        }
+
+        $user = \Auth::user();
+        $report = \App\Models\Report::with(['user', 'order.umkm', 'messages.sender'])->findOrFail($id);
+
+        // Otorisasi: pembuat laporan, pemilik UMKM dari order terkait, atau admin
+        $isCreator = $report->user_id === $user->id;
+        $isUmkmOwner = $report->order && $report->order->umkm && $report->order->umkm->user_id === $user->id;
+        $isUmkmGeneral = !$report->order_id && $user->role === 'umkm';
+        $isAdmin = $user->role === 'admin';
+        $isUmkm = $isUmkmOwner || $isUmkmGeneral;
+
+        if (!$isCreator && !$isUmkm && !$isAdmin) {
+            abort(403, 'Anda tidak memiliki hak akses untuk masuk ke halaman diskusi ini.');
+        }
+
+        // Pisahkan pesan per ruangan
+        $allMessages = $report->messages->sortBy('created_at');
+        $userRoomMessages = $allMessages->filter(fn($m) => $m->room === 'user' || $m->room === null);
+        $umkmRoomMessages = $allMessages->filter(fn($m) => $m->room === 'umkm');
+
+        // Reset unread count berdasarkan role yang membuka
+        if ($isCreator) {
+            $report->update(['unread_by_user' => 0]);
+        } elseif ($isUmkm) {
+            $report->update(['unread_by_umkm' => 0]);
+        } elseif ($isAdmin) {
+            $report->update(['unread_by_admin' => 0]);
+        }
+
+        return view('laporan.discussion', compact('report', 'user', 'userRoomMessages', 'umkmRoomMessages', 'isCreator', 'isUmkm', 'isAdmin'));
+    }
+
+    /**
+     * Post a new message inside report discussion
+     */
+    public function postDiscussionMessage(Request $request, $id)
+    {
+        if (!\Auth::check()) {
+            return redirect()->route('login')->with('error', 'Anda harus login terlebih dahulu.');
+        }
+
+        $user = \Auth::user();
+        $report = \App\Models\Report::with('order.umkm')->findOrFail($id);
+
+        // Otorisasi
+        $isCreator = $report->user_id === $user->id;
+        $isUmkmOwner = $report->order && $report->order->umkm && $report->order->umkm->user_id === $user->id;
+        $isUmkmGeneral = !$report->order_id && $user->role === 'umkm';
+        $isAdmin = $user->role === 'admin';
+        $isUmkm = $isUmkmOwner || $isUmkmGeneral;
+
+        if (!$isCreator && !$isUmkm && !$isAdmin) {
+            if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+                return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+            }
+            abort(403, 'Akses ditolak.');
+        }
+
+        // Cek pesan kosong lebih awal sebelum validasi Laravel
+        if (empty(trim($request->input('message', '')))) {
+            return response()->json(['success' => false, 'message' => 'Pesan tidak boleh kosong.'], 422);
+        }
+
+
+        $validator = Validator::make($request->all(), [
+            'message' => 'required|string',
+            'proof_image' => 'nullable|image|max:5120',
+            'room' => 'nullable|in:user,umkm',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+                'data' => $request->all(),
+            ], 422);
+        }
+
+        // Tentukan room berdasarkan peran pengirim:
+        // - Pembeli selalu ke room 'user'
+        // - UMKM selalu ke room 'umkm'
+        // - Admin mengikuti field 'room' yang dikirim dari form (tab yang aktif)
+        if ($isCreator) {
+            $targetRoom = 'user';
+        } elseif ($isUmkm) {
+            $targetRoom = 'umkm';
+        } else {
+            // Admin: ikuti parameter room dari request, default 'user'
+            $targetRoom = $request->input('room', 'user');
+        }
+
+        $imagePath = null;
+        if ($request->hasFile('proof_image')) {
+            $imagePath = \App\Services\MediaCompressionService::compressAndStoreImage($request->file('proof_image'), 'report-proofs');
+        }
+
+        \App\Models\ReportMessage::create([
+            'report_id' => $report->id,
+            'sender_id' => $user->id,
+            'message' => $request->message,
+            'image_path' => $imagePath,
+            'room' => $targetRoom,
+        ]);
+
+        // Naikkan unread count untuk pihak lain
+        if ($isCreator) {
+            $report->increment('unread_by_umkm');
+            $report->increment('unread_by_admin');
+        } elseif ($isUmkm) {
+            $report->increment('unread_by_user');
+            $report->increment('unread_by_admin');
+        } elseif ($isAdmin) {
+            // Admin reply ke room user → naikkan unread pembeli, reply ke room umkm → naikkan unread UMKM
+            if ($targetRoom === 'user') {
+                $report->increment('unread_by_user');
+            } else {
+                $report->increment('unread_by_umkm');
+            }
+        }
+
+        // Jika admin membalas dan status masih pending, ubah status ke diproses
+        if ($isAdmin && $report->status === 'pending') {
+            $report->update(['status' => 'diproses', 'admin_id' => $user->id]);
+        }
+
+        // Kembalikan JSON untuk AJAX, atau redirect untuk form biasa
+        if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return response()->json(['success' => true, 'message' => 'Pesan berhasil dikirim.']);
+        }
+
+        return redirect()->back()->with('success', 'Pesan berhasil dikirim.');
     }
 }

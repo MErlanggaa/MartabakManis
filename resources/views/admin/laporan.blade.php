@@ -118,7 +118,14 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ Str::limit($report->judul, 50) }}</div>
+                                    <div class="text-sm font-medium text-gray-900 flex items-center gap-2">
+                                        {{ Str::limit($report->judul, 50) }}
+                                        @if($report->unread_by_admin > 0)
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-red-500 text-white animate-pulse">
+                                                NEW
+                                            </span>
+                                        @endif
+                                    </div>
                                     <div class="text-sm text-gray-500 mt-1">{{ Str::limit($report->deskripsi, 80) }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -225,24 +232,40 @@
                                 <p class="text-gray-900 font-semibold">${report.judul}</p>
                             </div>
 
-                            <!-- Deskripsi -->
+                            <!-- Detail Transaksi Terkait (Jika ada) -->
+                            ${report.order_id ? `
                             <div>
-                                <h4 class="text-sm font-medium text-gray-500 mb-2">Deskripsi</h4>
-                                <div class="bg-gray-50 rounded-lg p-4">
-                                    <p class="text-gray-700 whitespace-pre-wrap">${report.deskripsi}</p>
-                                </div>
-                            </div>
-
-                            <!-- Respon Admin (jika ada) -->
-                            ${report.respon_admin ? `
-                            <div>
-                                <h4 class="text-sm font-medium text-gray-500 mb-2">Respon Admin</h4>
-                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                    <p class="text-gray-700 whitespace-pre-wrap">${report.respon_admin}</p>
-                                    ${report.admin ? `<p class="text-xs text-gray-500 mt-2">Oleh: ${report.admin.name}</p>` : ''}
+                                <h4 class="text-sm font-medium text-gray-500 mb-2">Transaksi Terkait</h4>
+                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-xs font-bold text-amber-800 uppercase">KODE ORDER: ${report.order.order_code}</span>
+                                        <span class="text-sm font-bold text-amber-900">Total: Rp ${new Intl.NumberFormat('id-ID').format(report.order.total)}</span>
+                                    </div>
+                                    <div class="text-sm text-gray-700">
+                                        <p><strong>UMKM:</strong> ${report.order.umkm_name}</p>
+                                        <p><strong>Nilai Produk (Subtotal):</strong> Rp ${new Intl.NumberFormat('id-ID').format(report.order.subtotal)}</p>
+                                    </div>
+                                    
+                                    <div class="mt-4 pt-3 border-t border-amber-200/50 flex justify-between items-center gap-4">
+                                        <p class="text-xs text-amber-700 leading-tight">Admin dapat mengundang UMKM, melakukan mediasi chat, dan memproses refund fleksibel (Penuh 100%, Setengah 50%, atau Custom Rp).</p>
+                                        <a href="/laporan/${report.id}/discussion" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm whitespace-nowrap">
+                                            <i class="fas fa-comments"></i> Mediasi & Refund
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                             ` : ''}
+
+                            <!-- Diskusi & Mediasi Link -->
+                            <div class="mt-4 bg-slate-50 border border-gray-150 rounded-xl p-4 flex items-center justify-between gap-4">
+                                <div>
+                                    <h5 class="text-sm font-bold text-gray-800">Ruang Diskusi & Mediasi</h5>
+                                    <p class="text-xs text-gray-500">Hubungi pelapor atau undang toko UMKM untuk aju banding.</p>
+                                </div>
+                                <a href="/laporan/${report.id}/discussion" class="bg-[#009b97] hover:bg-[#007a77] text-white text-xs font-bold px-4 py-2.5 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm whitespace-nowrap">
+                                    <i class="fas fa-comments"></i> Buka Diskusi Chat
+                                </a>
+                            </div>
 
                             <!-- Update Status -->
                             <div class="border-t pt-6">
@@ -340,6 +363,69 @@
                 text: 'Terjadi kesalahan saat memperbarui status.',
                 confirmButtonColor: '#009b97'
             });
+        });
+    }
+
+    // Potong Saldo UMKM karena laporan
+    function deductUmkm(reportId) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Potong Saldo UMKM?',
+            text: 'Apakah Anda yakin ingin memotong saldo UMKM atas pelanggaran/kendala pada transaksi laporan ini? Tindakan ini tidak dapat dibatalkan.',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Potong Saldo',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'Memproses...',
+                    text: 'Sedang memotong saldo UMKM',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                fetch(`/admin/laporan/${reportId}/deduct`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Pemotongan Berhasil!',
+                            text: data.message,
+                            confirmButtonColor: '#009b97'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Pemotongan Gagal',
+                            text: data.message || 'Gagal memotong saldo UMKM.',
+                            confirmButtonColor: '#009b97'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Terjadi kesalahan sistem saat menghubungi server.',
+                        confirmButtonColor: '#009b97'
+                    });
+                });
+            }
         });
     }
 

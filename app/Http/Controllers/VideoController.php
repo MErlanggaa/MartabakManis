@@ -8,6 +8,7 @@ use App\Models\UMKM;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use App\Services\MediaCompressionService;
 
 class VideoController extends Controller
 {
@@ -42,8 +43,8 @@ class VideoController extends Controller
 
         $umkm = Auth::user()->umkm;
         
-        // Upload Video
-        $videoPath = $request->file('video')->store('videos', 'public');
+        // Upload & Compress Video
+        $videoPath = MediaCompressionService::compressAndStoreVideo($request->file('video'), 'videos');
         
         // Generate Thumbnail (Optional - simplistic approach used here, better to use FFMpeg in real prod)
         // For now, we will just use a placeholder or no thumbnail logic if complex setup not requested.

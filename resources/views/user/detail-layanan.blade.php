@@ -196,9 +196,9 @@
 
                 <!-- React Checkout -->
                 <div class="mt-8" id="checkout-root"
-                     data-layanan='@json(["id" => $layanan->id, "nama" => $layanan->nama, "price" => $layanan->price])'
-                     data-umkm='@json(["id" => $umkm->id, "nama" => $umkm->nama])'
-                     data-user='@json(auth()->check() ? ["name" => auth()->user()->name] : null)'
+                     data-layanan="{{ json_encode(['id' => $layanan->id, 'nama' => $layanan->nama, 'price' => $layanan->price, 'weight' => $layanan->weight ?? 1.0, 'height' => $layanan->height ?? 10.0, 'allowed_deliveries' => $layanan->allowed_deliveries ?? ['gojek','grab','umkm_go']]) }}"
+                     data-umkm="{{ json_encode(['id' => $umkm->id, 'nama' => $umkm->nama, 'latitude' => $umkm->latitude, 'longitude' => $umkm->longitude]) }}"
+                     data-user="{{ json_encode(auth()->check() ? ['name' => auth()->user()->name] : null) }}"
                      data-authenticated="{{ auth()->check() ? 'true' : 'false' }}">
                 </div>
 
@@ -556,7 +556,7 @@
                 title: 'Like UMKM',
                 html: `<div class="text-left">
                     <p class="mb-3">Anda akan menyukai UMKM <strong>${umkmNama}</strong></p>
-                    <p class="text-sm text-gray-600">💡 <strong>Informasi:</strong> Menyukai layanan ini akan menyukai semua layanan dari UMKM yang sama.</p>
+                    <p class="text-sm text-gray-600"><i class="fas fa-lightbulb text-amber-500 mr-1"></i> <strong>Informasi:</strong> Menyukai layanan ini akan menyukai semua layanan dari UMKM yang sama.</p>
                 </div>`,
                 icon: 'info',
                 showCancelButton: true,

@@ -14,6 +14,9 @@ class Layanan extends Model
         'price',
         'photo_path',
         'description',
+        'weight',
+        'height',
+        'allowed_deliveries',
         'views',
     ];
 
@@ -21,6 +24,9 @@ class Layanan extends Model
     {
         return [
             'price' => 'decimal:2',
+            'weight' => 'float',
+            'height' => 'float',
+            'allowed_deliveries' => 'array',
         ];
     }
 

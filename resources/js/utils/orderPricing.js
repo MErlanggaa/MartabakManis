@@ -1,9 +1,10 @@
 export const APP_TAX_RATE = 0.02;
+export const QRIS_TAX = 1000;
 
 export const DELIVERY_OPTIONS = [
     {
         id: 'gojek',
-        label: 'Gojek',
+        label: 'Gojek (GoSend)',
         fee: 15000,
         color: '#00AA13',
         icon: '🛵',
@@ -11,7 +12,7 @@ export const DELIVERY_OPTIONS = [
     },
     {
         id: 'grab',
-        label: 'Grab',
+        label: 'Grab (GrabSend)',
         fee: 14000,
         color: '#00B14F',
         icon: '🚗',
@@ -27,6 +28,23 @@ export const DELIVERY_OPTIONS = [
     },
 ];
 
+export const PAYMENT_OPTIONS = [
+    {
+        id: 'midtrans',
+        label: 'Midtrans (DANA, OVO, Transfer)',
+        icon: '💳',
+        description: 'Bayar via berbagai metode pembayaran digital',
+        extraTax: 0,
+    },
+    {
+        id: 'qris',
+        label: 'QRIS',
+        icon: '📱',
+        description: 'Scan QR Code — kena pajak Rp 1.000',
+        extraTax: QRIS_TAX,
+    },
+];
+
 export function formatRupiah(amount) {
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -36,14 +54,15 @@ export function formatRupiah(amount) {
     }).format(amount);
 }
 
-export function calculatePricing(unitPrice, quantity, deliveryMethod) {
+export function calculatePricing(unitPrice, quantity, deliveryMethod, paymentMethod = 'midtrans') {
     const subtotal = unitPrice * quantity;
     const delivery = DELIVERY_OPTIONS.find((d) => d.id === deliveryMethod);
     const deliveryFee = delivery?.fee ?? 0;
     const appTax = Math.round(subtotal * APP_TAX_RATE);
-    const total = subtotal + deliveryFee + appTax;
+    const qrisTax = paymentMethod === 'qris' ? QRIS_TAX : 0;
+    const total = subtotal + deliveryFee + appTax + qrisTax;
 
-    return { subtotal, deliveryFee, appTax, total };
+    return { subtotal, deliveryFee, appTax, qrisTax, total };
 }
 
 export function getCsrfToken() {

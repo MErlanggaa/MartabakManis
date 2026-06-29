@@ -68,6 +68,18 @@
                                 <p class="text-gray-700 leading-relaxed">{{ Str::limit($report->deskripsi, 200) }}</p>
                             </div>
 
+                            <!-- Discussion Chat Access -->
+                            <div class="flex flex-wrap gap-3 items-center mb-4">
+                                <a href="{{ route('laporan.discussion', $report->id) }}" class="relative bg-[#009b97]/10 hover:bg-[#009b97]/20 text-[#009b97] border border-[#009b97]/20 px-4 py-2 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 shadow-sm">
+                                    <i class="fas fa-comments"></i> Detail & Diskusi Mediasi
+                                    @if($report->unread_by_user > 0)
+                                        <span class="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-black text-white shadow-md">
+                                            {{ $report->unread_by_user }}
+                                        </span>
+                                    @endif
+                                </a>
+                            </div>
+
                             <!-- Respon Admin (jika ada) -->
                             @if($report->respon_admin)
                                 <div class="bg-blue-50 border-l-4 border-[#009b97] p-4 rounded-lg">
