@@ -30,7 +30,7 @@ class AIConsultationController extends Controller
 
         $user = Auth::user();
         $umkm = $user->umkm;
-        
+
         if (!$umkm) {
             return response()->json([
                 'success' => false,
@@ -40,10 +40,10 @@ class AIConsultationController extends Controller
 
         // Prepare context for AI
         $context = $this->buildContext($umkm, $request->message);
-        
+
         // Get AI response from Gemini
         $response = $this->getAIResponse($context, $request->message);
-        
+
         if ($response['success']) {
             return response()->json([
                 'success' => true,
@@ -59,7 +59,7 @@ class AIConsultationController extends Controller
                     'message' => $response['error'] ?? 'Batas penggunaan API telah tercapai. Silakan coba lagi dalam beberapa menit.',
                 ], 429);
             }
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Maaf, layanan AI sedang tidak tersedia. Silakan coba lagi nanti.'
@@ -73,12 +73,12 @@ class AIConsultationController extends Controller
         $context = "Anda adalah seorang Konsultan Bisnis Profesional yang berpengalaman dalam membantu UMKM (Usaha Mikro, Kecil, dan Menengah) di Indonesia. ";
         $context .= "Anda memiliki keahlian dalam strategi bisnis, pemasaran digital, manajemen keuangan, operasional, dan pengembangan bisnis. ";
         $context .= "Gaya komunikasi Anda jelas, praktis, mudah dipahami, dan memberikan solusi yang dapat langsung diterapkan.\n\n";
-        
+
         $context .= "INFORMASI UMKM:\n";
         $context .= "- Nama UMKM: {$umkm->nama}\n";
         $context .= "- Jenis Bisnis: {$umkm->jenis_umkm}\n";
         $context .= "- Deskripsi: " . ($umkm->description ?? 'Tidak ada deskripsi') . "\n";
-        
+
         // Add financial context if available
         $keuntungan = $umkm->keuntungan()->latest()->first();
         if ($keuntungan) {
@@ -88,10 +88,10 @@ class AIConsultationController extends Controller
             $context .= "- Keuntungan Bersih: Rp " . number_format($keuntungan->keuntungan_bersih, 0, ',', '.') . "\n";
             $context .= "- Jumlah Transaksi: {$keuntungan->jumlah_transaksi}\n";
         }
-        
+
         $context .= "\nPERTANYAAN DARI PEMILIK UMKM:\n";
         $context .= "{$userMessage}\n\n";
-        
+
         $context .= "INSTRUKSI UNTUK ANDA:\n";
         $context .= "1. Berikan jawaban yang profesional, praktis, dan mudah dipahami oleh pemilik UMKM\n";
         $context .= "2. Fokus pada solusi yang dapat langsung diterapkan dengan sumber daya terbatas\n";
@@ -103,13 +103,13 @@ class AIConsultationController extends Controller
         $context .= "8. PENTING: Jika pertanyaan user masih umum atau kurang spesifik, AJUKAN PERTANYAAN KLARIFIKASI untuk memahami kebutuhan mereka dengan lebih baik\n";
         $context .= "9. Bersikaplah proaktif dan interaktif - jangan hanya memberikan jawaban generic, tapi tanyakan detail lebih lanjut jika diperlukan\n";
         $context .= "10. Jika user mengatakan 'saya butuhkan beberapa hal' atau pertanyaan umum, tanyakan: 'Hal apa saja yang Anda butuhkan? Bisakah Anda jelaskan lebih detail?'\n\n";
-        
+
         $context .= "CONTOH INTERAKSI YANG BAIK:\n";
         $context .= "- Jika user bertanya umum: 'Saya butuh beberapa hal' → Anda harus bertanya: 'Baik, hal apa saja yang Anda butuhkan? Apakah terkait pemasaran, keuangan, operasional, atau aspek lain? Saya akan membantu Anda dengan lebih baik jika Anda bisa jelaskan lebih detail.'\n";
         $context .= "- Jika user bertanya spesifik: Berikan jawaban lengkap dengan langkah-langkah, lalu tanyakan apakah ada yang perlu diklarifikasi\n\n";
-        
+
         $context .= "Jawablah dengan format yang rapi, gunakan poin-poin jika perlu, dan pastikan jawaban Anda membantu pemilik UMKM memahami dan menerapkan saran Anda. JANGAN memberikan jawaban generic seperti 'fokus pada kualitas produk' tanpa konteks spesifik.";
-        
+
         return $context;
     }
 
@@ -117,14 +117,14 @@ class AIConsultationController extends Controller
     {
         // Use Gemini API
         $response = $this->tryGemini($context, $userMessage);
-        
+
         // Log the response for debugging
         \Log::info('AI Response Check', [
             'success' => $response['success'] ?? false,
             'has_message' => isset($response['message']),
             'message_preview' => isset($response['message']) ? substr($response['message'], 0, 100) : 'No message'
         ]);
-        
+
         if ($response['success'] && !empty($response['message'])) {
             return $response;
         }
@@ -133,7 +133,7 @@ class AIConsultationController extends Controller
         \Log::warning('Gemini API failed, using fallback', [
             'response' => $response
         ]);
-        
+
         // Fallback to simple rule-based response
         return $this->getFallbackResponse($userMessage);
     }
@@ -141,28 +141,21 @@ class AIConsultationController extends Controller
     private function tryGemini($context, $userMessage)
     {
         try {
-            // Use gemini-2.5-flash (as shown in user's dashboard)
-            // This matches the model in Google AI Studio dashboard
             $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . $this->geminiApiKey;
-            
-            \Log::info('Calling Gemini API', [
-                'url' => str_replace($this->geminiApiKey, '***', $url),
-                'context_length' => strlen($context),
-                'message_length' => strlen($userMessage)
-            ]);
-            
+
             $response = Http::timeout(60)->post($url, [
                 'contents' => [
                     [
+                        'role' => 'user',
                         'parts' => [
                             [
-                                'text' => $context
+                                'text' => $context . "\n\nPERTANYAAN USER:\n" . $userMessage
                             ]
                         ]
                     ]
                 ],
                 'generationConfig' => [
-                    'temperature' => 0.8, // Slightly higher for more creative and interactive responses
+                    'temperature' => 0.7,
                     'topK' => 40,
                     'topP' => 0.95,
                     'maxOutputTokens' => 2048,
@@ -189,105 +182,23 @@ class AIConsultationController extends Controller
 
             if ($response->successful()) {
                 $data = $response->json();
-                
-                // Log for debugging (but don't log full response if too long)
-                \Log::info('Gemini API Response Received', [
-                    'has_candidates' => isset($data['candidates']),
-                    'candidates_count' => isset($data['candidates']) ? count($data['candidates']) : 0,
-                    'first_candidate_keys' => isset($data['candidates'][0]) ? array_keys($data['candidates'][0]) : []
-                ]);
-                
-                // Check if response was blocked
-                if (isset($data['candidates'][0]['finishReason'])) {
-                    $finishReason = $data['candidates'][0]['finishReason'];
-                    \Log::info('Gemini finishReason', ['reason' => $finishReason]);
-                    
-                    if ($finishReason === 'SAFETY') {
-                        \Log::warning('Gemini API - Response blocked by safety settings');
-                        return ['success' => false, 'message' => 'Response blocked by safety settings'];
-                    }
-                    
-                    if ($finishReason === 'MAX_TOKENS') {
-                        \Log::warning('Gemini API - Response truncated due to max tokens');
-                    }
-                }
-                
-                // Extract response from Gemini API
+
                 if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-                    $message = $data['candidates'][0]['content']['parts'][0]['text'];
-                    
-                    // Clean up the response
-                    $message = trim($message);
-                    
-                    // Remove "AI Konsultan:" prefix if present (we'll add it in the view)
-                    $message = preg_replace('/^AI\s*Konsultan\s*:\s*/i', '', $message);
-                    
-                    \Log::info('Gemini API Success', [
-                        'message_length' => strlen($message),
-                        'message_preview' => substr($message, 0, 150)
-                    ]);
-                    
                     return [
                         'success' => true,
-                        'message' => $message
+                        'message' => trim($data['candidates'][0]['content']['parts'][0]['text'])
                     ];
-                } else {
-                    \Log::error('Gemini API - Unexpected response structure', [
-                        'response_keys' => array_keys($data),
-                        'candidates_structure' => isset($data['candidates'][0]) ? [
-                            'keys' => array_keys($data['candidates'][0]),
-                            'has_content' => isset($data['candidates'][0]['content']),
-                            'content_keys' => isset($data['candidates'][0]['content']) ? array_keys($data['candidates'][0]['content']) : []
-                        ] : 'No candidates'
-                    ]);
-                }
-            } else {
-                $errorBody = $response->body();
-                $statusCode = $response->status();
-                
-                \Log::error('Gemini API HTTP Error', [
-                    'status' => $statusCode,
-                    'body' => substr($errorBody, 0, 500) // Limit log size
-                ]);
-                
-                // Try to extract error message
-                $errorData = json_decode($errorBody, true);
-                if (isset($errorData['error']['message'])) {
-                    $errorMessage = $errorData['error']['message'];
-                    \Log::error('Gemini API Error Message: ' . $errorMessage);
-                    
-                    // Check for rate limit error (429 or rate limit message)
-                    if ($statusCode == 429 || 
-                        strpos(strtolower($errorMessage), 'rate limit') !== false ||
-                        strpos(strtolower($errorMessage), 'quota') !== false ||
-                        strpos(strtolower($errorMessage), 'resource exhausted') !== false) {
-                        \Log::warning('Gemini API Rate Limit Exceeded - RPM limit reached!');
-                        
-                        // Return a user-friendly message
-                        return [
-                            'success' => false,
-                            'message' => 'rate_limit',
-                            'error' => 'Maaf, batas penggunaan API telah tercapai. Silakan coba lagi dalam beberapa saat. Free tier memiliki limit 10 request per menit.'
-                        ];
-                    }
-                    
-                    // If API key is invalid
-                    if (strpos($errorMessage, 'API key') !== false || 
-                        strpos($errorMessage, 'invalid') !== false) {
-                        \Log::error('Gemini API Key might be invalid!');
-                    }
                 }
             }
+
         } catch (\Exception $e) {
-            \Log::error('Gemini API Exception', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+            \Log::error('Gemini Exception', [
+                'message' => $e->getMessage()
             ]);
         }
 
         return ['success' => false];
     }
-
     private function getFallbackResponse($userMessage)
     {
         $keywords = [
